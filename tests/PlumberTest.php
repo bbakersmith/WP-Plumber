@@ -13,7 +13,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   // tests
 
 
-  public function testBasicRouteInit() {
+  public function testBasicRouteInitilization() {
     global $wp_plumber_routes;
 
     $routes = array(
@@ -31,7 +31,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   }
 
 
-  public function testRouteInitWithTemplates() {
+  public function testRouteTemplateInheritance() {
     global $wp_plumber_routes;
 
     $routes = array(
@@ -63,9 +63,6 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $this->assertContains('home_settings', $wp_plumber_routes['$']['pods']);
   }
 
-  public function testRouteTemplateCascade() {
-
-  }
 
   public function testRouteCallback() {
 

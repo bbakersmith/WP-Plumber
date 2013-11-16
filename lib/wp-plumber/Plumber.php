@@ -32,10 +32,11 @@ class Plumber {
 
 
   private static function generate_route_definitions() {
-    $routes = WP_PLUMBER_ROUTES;
+    global $wp_plumber_routes;
+
     $all_definitions = array();
 
-    foreach($routes as $route => $definition) {
+    foreach($wp_plumber_routes as $route => $definition) {
       $total_params = self::find_total_query_params($definition);
       $query_vars = array();
       $page_arguments = array();
