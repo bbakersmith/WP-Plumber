@@ -31,30 +31,33 @@ class Plumber {
   }
 
 
-  private static function generate_route_definitions() {
+  // should be private, but will need to mock get_route_definitions
+  public static function generate_route_definitions() {
     global $wp_plumber_routes;
+
+print "______________";
+print_r($wp_plumber_routes);
 
     $all_definitions = array();
 
     foreach($wp_plumber_routes as $route => $definition) {
-      $total_params = self::find_total_query_params($definition);
-      $query_vars = array();
-      $page_arguments = array();
-
-      for($param = 1; $param <= $total_params; $param++) {
-        $query_vars[''.$param] = $param;
-        array_push($page_arguments, $param);
-      }
 
       $wp_router_definition = array(
         $route => array(
           'path' => $route,
           'page_callback' => __NAMESPACE__.'\Plumber.render_page',
           'template' => false,
-          'query_vars' => $query_vars,
-          'page_arguments' => $page_arguments
+          'query_vars' => array(),
+          'page_arguments' => array()
         )
       );
+
+      $total_params = self::find_total_query_params($definition);
+
+      for($param = 1; $param <= $total_params; $param++) {
+        $wp_router_definition['query_vars'][''.$param] = $param;
+        array_push($wp_route_definition['page_arguments'], $param);
+      }
 
       array_push($all_definitions, $wp_route_definition);
     }
@@ -76,6 +79,8 @@ class Plumber {
     foreach($routes as $route => $definition) {
       if(array_key_exists('route_template', $definition)) {
         $new_definition = self::apply_route_template($definition, $templates);
+      } else {
+        $new_definition = $definition;
       }
       $all_applied_routes[$route] = $new_definition;
     }
