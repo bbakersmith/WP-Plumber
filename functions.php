@@ -79,4 +79,11 @@ Plumber.initialize_routes(array(
   'routes' => $routes
 ));
 
-?>
+add_action('wp_router_generate_routes',
+           __NAMESPACE__.'\Plumber.get_route_definitions',
+           20);
+
+// hopefully this can be called from Plumber
+// add_action('wp_router_generate_routes',
+//            __NAMESPACE__.'\Plumber.generate_route_definitions',
+//            20);
