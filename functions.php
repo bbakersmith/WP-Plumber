@@ -74,8 +74,9 @@ $route_templates = array(
 );
 
 
-Plumber->views_directory = 'views' // relative to theme directory
-Plumber->route_templates = $route_templates; // optional
-Plumber->register_routes($routes);
+Plumber.initialize_routes(array(
+  'route_templates' => $route_templates,
+  'routes' => $routes
+));
 
 ?>
