@@ -8,14 +8,20 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   protected function setUp() {
 
     $this->routes = array(
-      '^basic$' => array(
+
+      '' => array(
+        'pods' => array('home_settings'),
+        'route_template' => 'second'
+      ),
+
+      'basic' => array(
         'pods' => array('home_settings')
       ),
 
-      '$' => array(
-        'pods' => array('home_settings'),
-        'route_template' => 'second'
+      'variable/:first/:second' => array(
+        'pods' => array('thing:second')
       )
+
     );
 
     $this->route_templates = array(
@@ -34,7 +40,6 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       'routes' => $this->routes,
       'route_templates' => $this->route_templates
     ));
-
   }
 
 
@@ -42,37 +47,40 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   public function testBasicRouteInitilization() {
-    global $wp_plumber_routes;
-
-    $basic_key = '^basic$';
+    $wp_plumber_routes = $GLOBALS['wp_plumber_routes'];
 
     $this->assertEquals(
-      $this->routes[$basic_key], 
-      $wp_plumber_routes[$basic_key]
+      $this->routes['basic']['pods'],
+      $wp_plumber_routes[1]->plumber_definition['pods']
     );
   }
 
 
   public function testRouteTemplateInheritance() {
-    global $wp_plumber_routes;
+    $wp_plumber_routes = $GLOBALS['wp_plumber_routes'];
 
-    $this->assertEquals('second', $wp_plumber_routes['$']['views_template']);
-    $this->assertContains('global_settings', $wp_plumber_routes['$']['pods']);
-    $this->assertContains('home_settings', $wp_plumber_routes['$']['pods']);
+    $target_definition = $wp_plumber_routes[0]->plumber_definition;
+
+    $this->assertEquals('second', $target_definition['views_template']);
+    $this->assertContains('global_settings', $target_definition['pods']);
+    $this->assertContains('home_settings', $target_definition['pods']);
   }
 
 
   public function testWPRouterDefinitionGeneration() {
     $definitions = Plumber::generate_route_definitions();
+    $target_definition = $definitions[2];
 
-    $this->assertEquals('$', $definitions['path']);
-    $this->assertEquals(false, $definitions['template']);
+    $expected_path = '^variable/([^\/\s]+)/([^\/\s]+)$';
 
-    $this->assertContains('1', $definitions['query_vars']);
-    $this->assertContains('2', $definitions['query_vars']);
+    $this->assertEquals($expected_path, $target_definition['path']);
+    $this->assertEquals(false, $target_definition['template']); 
 
-    $this->assertContains('1', $definitions['page_arguments']);
-    $this->assertContains('2', $definitions['page_arguments']);
+    $this->assertEquals(1, $target_definition['query_vars']['first']);
+    $this->assertEquals(2, $target_definition['query_vars']['second']);
+
+    $this->assertEquals('first', $target_definition['page_arguments'][1]);
+    $this->assertEquals('second', $target_definition['page_arguments'][2]);
   }
 
 

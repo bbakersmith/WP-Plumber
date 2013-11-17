@@ -1,11 +1,12 @@
 <?php
 
+require_once(dirname(__FILE__).'/PlumberRoute.php');
+require_once(dirname(__FILE__).'/PlumberRouteCallback.php');
+
 class Plumber {
 
 
   public static function initialize_routes($args) {
-    global $wp_plumber_routes;
-
     if(array_key_exists('routes', $args)) {
 
       if(array_key_exists('route_templates', $args)) {
@@ -17,14 +18,19 @@ class Plumber {
         $routes = $args['routes'];
       }
 
-      $wp_plumber_routes = $routes;
-
+      $rank = 0;
+      foreach($routes as $route => $definition) {
+        $definition['id'] = $rank;
+        $definition['path'] = $route;
+        $GLOBALS['wp_plumber_routes'][$rank] = new PlumberRoute($definition);
+        $rank++;
+      }
     }
   }
 
 
   public static function get_route_definitions($router) {
-    $wp_router_definitions = self::generate_wp_router_definitions();
+    $wp_router_definitions = self::generate_route_definitions();
     foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($route, $definition);
     }
@@ -33,42 +39,13 @@ class Plumber {
 
   // should be private, but will need to mock get_route_definitions
   public static function generate_route_definitions() {
-    global $wp_plumber_routes;
-
-print "______________";
-print_r($wp_plumber_routes);
-
     $all_definitions = array();
-
-    foreach($wp_plumber_routes as $route => $definition) {
-
-      $wp_router_definition = array(
-        $route => array(
-          'path' => $route,
-          'page_callback' => __NAMESPACE__.'\Plumber.render_page',
-          'template' => false,
-          'query_vars' => array(),
-          'page_arguments' => array()
-        )
-      );
-
-      $total_params = self::find_total_query_params($definition);
-
-      for($param = 1; $param <= $total_params; $param++) {
-        $wp_router_definition['query_vars'][''.$param] = $param;
-        array_push($wp_route_definition['page_arguments'], $param);
+    foreach($GLOBALS['wp_plumber_routes'] as $route) {
+      foreach($route->router_definition as $id => $definition) {
+        $all_definitions[$id] = $definition;
       }
-
-      array_push($all_definitions, $wp_route_definition);
     }
-
     return $all_definitions;
-  }
-
-
-  public static function render_page() {
-    $args = func_get_args();
-    print_r($args);
   }
 
 
@@ -118,46 +95,7 @@ print_r($wp_plumber_routes);
   }
 
 
-  private static function register_route_definitions($route_definitions) {
-
-  }
-
-
-  private static function theme_dir($dirname) {
-    return get_stylesheet_directory().'/'.$dirname.'/';
-  }
-
-
-  // TODO (MAYBE) postprocessor, inline pods filter/sort definitions
-
-}
-
-
-class PlumberRouteDefinition {
-
-  // create router definition
-
-    // path = key
-    
-    // args include all info needed by callback to get pods and render view
-
-}
-
-
-class PlumberRouteCallback {
-  
-  function __call($method, $args) {
-
-  }
-
-
-  // callback fetches specified pods
-
-  // combines pods with url_args and additional_args
-
-  // passes combined args (with pods) to preprocessor function
-
-  // passes preprocessor results to view template
+  // TODO support for postprocessor function
 
 }
 
