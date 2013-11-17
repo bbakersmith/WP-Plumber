@@ -36,7 +36,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       )
     );
 
-    Plumber::initialize_routes(array(
+    Plumber::register_routes(array(
       'routes' => $this->routes,
       'route_templates' => $this->route_templates
     ));
@@ -86,7 +86,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
   public function testRouteCallback() {
     $id = 2;
-    $callback = PlumberRouteCallback::call($id, 'firstval', 'secondval');
+    $callback = PlumberCallback::call($id, 'firstval', 'secondval');
     print "route: ";
     print_r($GLOBALS['wp_plumber_routes'][$id]);
     print "callback: ";

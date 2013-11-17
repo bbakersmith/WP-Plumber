@@ -1,12 +1,12 @@
 <?php
 
 require_once(dirname(__FILE__).'/PlumberRoute.php');
-require_once(dirname(__FILE__).'/PlumberRouteCallback.php');
+require_once(dirname(__FILE__).'/PlumberCallback.php');
 
 class Plumber {
 
 
-  public static function initialize_routes($args) {
+  public static function register_routes($args) {
     if(array_key_exists('routes', $args)) {
 
       if(array_key_exists('route_templates', $args)) {
@@ -26,6 +26,11 @@ class Plumber {
         $rank++;
       }
     }
+  }
+
+
+  public static function callback() {
+    PlumberCallback::call(func_get_args());
   }
 
 

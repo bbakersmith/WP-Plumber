@@ -16,7 +16,7 @@ class PlumberRoute {
   private function build_router_definition($definition) {
     $new_definition = array(
       'path' => self::build_path($definition['path']),
-      'page_callback' => __NAMESPACE__.'\PlumberRouteCallback.call',
+      'page_callback' => __NAMESPACE__.'\Plumber.callback',
       'template' => false,
       'query_vars' => array(),
       'page_arguments' => array()
