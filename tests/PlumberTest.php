@@ -2,7 +2,6 @@
 
 require_once('lib/wp-plumber/Plumber.php');
 
-
 class PlumberTest extends PHPUnit_Framework_TestCase {
 
   protected function setUp() {
@@ -85,7 +84,9 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   public function testRouteCallback() {
-
+    $callback = PlumberRouteCallback::call(2, 'firstval', 'secondval');
+    print "callback: ";
+    print_r($callback);
   }
 
   public function testPodArgumentFormation() {
