@@ -24,9 +24,7 @@ class PlumberRoute {
 
     $vars_and_args = self::build_vars_and_args($definition);
 
-    $router_definition = array(
-      $definition['id'] => array_merge($new_definition, $vars_and_args)
-    );
+    $router_definition = array_merge($new_definition, $vars_and_args);
     return $router_definition;
   }
 

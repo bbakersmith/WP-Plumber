@@ -41,9 +41,7 @@ class Plumber {
   public static function generate_route_definitions() {
     $all_definitions = array();
     foreach($GLOBALS['wp_plumber_routes'] as $route) {
-      foreach($route->router_definition as $id => $definition) {
-        $all_definitions[$id] = $definition;
-      }
+      $all_definitions[$route->id] = $route->router_definition;
     }
     return $all_definitions;
   }

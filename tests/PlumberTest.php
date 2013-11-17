@@ -18,7 +18,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ),
 
       'variable/:first/:second' => array(
-        'pods' => array('thing:second')
+        'pods' => array('name:thing[second]'),
+        'views_template' => 'things/single'
       )
 
     );
@@ -84,7 +85,10 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   public function testRouteCallback() {
-    $callback = PlumberRouteCallback::call(2, 'firstval', 'secondval');
+    $id = 2;
+    $callback = PlumberRouteCallback::call($id, 'firstval', 'secondval');
+    print "route: ";
+    print_r($GLOBALS['wp_plumber_routes'][$id]);
     print "callback: ";
     print_r($callback);
   }
