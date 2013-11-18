@@ -15,4 +15,8 @@ require_once($plumber_plugin_directory.'/Plumber.class.php');
 require_once($plumber_plugin_directory.'/PlumberRoute.class.php');
 require_once($plumber_plugin_directory.'/PlumberRouteFactory.class.php');
 
+add_action('wp_router_generate_routes', 
+           __NAMESPACE__.'\Plumber::add_route_definitions', 
+          20);
+
 ?>

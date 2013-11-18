@@ -4,48 +4,43 @@ class Plumber {
 
 
   public static function register_routes($args) {
+print time();
+print "REGISTER";
     PlumberRouteFactory::create_routes($args);
   }
 
 
   public static function callback() {
+print time();
+print "CALLBACK";
     // first callback arg is id, the rest are query_vars
     $args = func_get_args();
     $id = $args[0];
     $page_arguments = array_slice($args, 1);
+print $page_arguments;
     self::get_route_by_id($id)->callback($page_arguments);
   }
 
 
-  public static function get_route_definitions($router) {
+  public static function add_route_definitions($router) {
     $wp_router_definitions = self::generate_route_definitions();
+print time();
+print_r($wp_router_definitions);
     foreach($wp_router_definitions as $route => $definition) {
-      $router->add_route($route, $definition);
+      $router->add_route($definition['path'], $definition);
+print time();
+print_r($router);
     }
   }
 
 
-  // should be private, but will need to mock get_route_definitions
+  // should be private, but will need to mock add_route_definitions
   public static function generate_route_definitions() {
     $all_definitions = array();
     foreach($GLOBALS['wp_plumber_routes'] as $route) {
       $all_definitions[$route->id] = $route->router_definition;
     }
     return $all_definitions;
-  }
-
-
-  // TODO TODO TODO TODO
-  // could possibly put this in a views class
-  // unsure how best to instantiate and access php-liquid
-  public static function render_liquid_template($template, $args = array()) {
-    // TODO also need to add liquid lib registration...
-    global $liquid;
-
-    $template_path = THEME_ROOT.'/views/'.$template.'.liquid';
-    $liquid->parse(file_get_contents($template_path));
-
-    print $liquid->render($args);
   }
 
 
