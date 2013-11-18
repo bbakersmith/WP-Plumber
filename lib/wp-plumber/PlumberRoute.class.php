@@ -76,6 +76,8 @@ print_r($arg_keys);
         $parts = explode(':', $pod_string, 2);
         $results_key = $parts[0];
         $pod_string = $parts[1];
+      } else {
+        $results_key = false;
       }
 
       // handle dynamic query vars
@@ -87,7 +89,7 @@ print_r($arg_keys);
       }
 
       // form args
-      $results_key = isset($results_key) ? $results_key : $pod_string;
+      $results_key = $results_key != false ? $results_key : $pod_string;
       $pod_type = $pod_string;
 
       // get pods
@@ -95,6 +97,11 @@ print_r($arg_keys);
         $pods = pods($pod_type, $pod_id_or_slug);
       } else {
         $pods = pods($pod_type);
+        // TODO possibly other types than post_type, like tags or categories
+        if(self::get_object_type($pods) == 'post_type') {
+          // TODO allow pod_templates for filtering
+          $pods = pods($pod_type, array()); 
+        }
       }
 
       if(isset($pod_id_or_slug) || 
@@ -135,7 +142,7 @@ print_r($arg_keys);
 
 
   private function build_path($plumber_path) {
-    $new_path = preg_replace('/:([^\/\s]+)/', '([^\/\s]+)', $plumber_path);
+    $new_path = preg_replace('/:([^\/\s]+)/', '(.*)', $plumber_path);
 
     if($new_path == '') {
       $final_path = '$';
@@ -202,6 +209,7 @@ print_r($arg_keys);
 
  // get all the fields for each of the supplied pods
   private function multi_pod_fields($pods) {
+print "START MULTI POD FIELDS!!!";
     $multi_pod_fields = array();
     while($pods->fetch()) {
       $pod_fields = self::single_pod_fields($pods);

@@ -28,9 +28,9 @@ print time();
 print_r($wp_router_definitions);
     foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
+    }
 print time();
 print_r($router);
-    }
   }
 
 
