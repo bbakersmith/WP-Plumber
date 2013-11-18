@@ -1,6 +1,6 @@
 <?php
 
-require_once('lib/wp-plumber/Plumber.php');
+require_once('Plumber.php');
 
 class PlumberTest extends PHPUnit_Framework_TestCase {
 

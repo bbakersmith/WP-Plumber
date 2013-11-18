@@ -69,13 +69,13 @@ class PlumberRoute {
 
       // get pods
       if(isset($pod_id_or_slug)) {
-        $pod_results = single_pod_fields(pods($pod_type, $pod_id_or_slug));
+        $results = self::single_pod_fields(pods($pod_type, $pod_id_or_slug));
       } else {
-        $pod_results = multi_pod_fields(pods($pod_type));
+        $results = self::multi_pod_fields(pods($pod_type));
       }
 
       // add pods to array
-      $all_pods[$results_key] = $pod_results;
+      $all_pods[$results_key] = $results;
     }
 
     return $all_pods;
