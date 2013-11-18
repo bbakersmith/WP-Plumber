@@ -69,9 +69,9 @@ class PlumberRoute {
 
       // get pods
       if(isset($pod_id_or_slug)) {
-        $pod_results = pods($pod_type, $pod_id_or_slug);
+        $pod_results = single_pod_fields(pods($pod_type, $pod_id_or_slug));
       } else {
-        $pod_results = pods($pod_type);
+        $pod_results = multi_pod_fields(pods($pod_type));
       }
 
       // add pods to array
@@ -160,6 +160,41 @@ class PlumberRoute {
 
   private function theme_dir($dirname) {
     return get_stylesheet_directory().'/'.$dirname.'/';
+  }
+
+
+ // get all the fields for each of the supplied pods
+  private function multi_pod_fields($pods) {
+    $multi_pod_fields = array();
+    while($pods->fetch()) {
+      $pod_fields = self::single_pod_fields($pods);
+      array_push($multi_pod_fields, $pod_fields);
+    }
+    return $multi_pod_fields;
+  }
+
+
+  // get all the fields of a single pod
+  private function single_pod_fields($pod) {
+    $basic_fields = $pod->row();
+    $basic_fields["url"] = get_permalink($pod->id());
+
+    if(array_key_exists("post_title", $basic_fields)) {
+      $basic_fields["title"] = $basic_fields["post_title"];
+    }
+
+    $custom_fields = array();
+    foreach($pod->fields() as $field) {
+      $field_name = $field['name'];
+      $custom_fields[$field_name] = $pod->field($field_name);
+    }
+
+    $all_fields = array_merge(
+      $basic_fields, 
+      $custom_fields
+    );
+
+    return $all_fields;
   }
 
 

@@ -39,6 +39,8 @@ class Plumber {
 
 
   // TODO TODO TODO TODO
+  // could possibly put this in a views class
+  // unsure how best to instantiate and access php-liquid
   public static function render_liquid_template($template, $args = array()) {
     // TODO also need to add liquid lib registration...
     global $liquid;
