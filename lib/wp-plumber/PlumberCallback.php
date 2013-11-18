@@ -21,7 +21,7 @@ class PlumberCallback {
     ));
 
     // TODO call preprocessor function with args, if preprocessor given
-    $render_args = self::preprocess_args($pre_render_args);
+    $render_args = self::preprocess_args($id, $pre_render_args);
 
     // TODO call render function with processed (or not) args
     self::render_liquid_template($id, $render_args);

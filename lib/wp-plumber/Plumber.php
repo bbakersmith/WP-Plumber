@@ -1,7 +1,6 @@
 <?php
 
 require_once(dirname(__FILE__).'/PlumberRoute.php');
-require_once(dirname(__FILE__).'/PlumberCallback.php');
 
 class Plumber {
 
@@ -30,7 +29,11 @@ class Plumber {
 
 
   public static function callback() {
-    PlumberCallback::call(func_get_args());
+    // first callback arg is id, the rest are query_vars
+    $args = func_get_args();
+    $id = $args[0];
+    $page_arguments = array_slice($args, 1);
+    self::get_route_by_id($id)->callback($page_arguments);
   }
 
 
@@ -49,6 +52,18 @@ class Plumber {
       $all_definitions[$route->id] = $route->router_definition;
     }
     return $all_definitions;
+  }
+
+
+  // TODO TODO TODO TODO
+  public static function render_liquid_template($template, $args = array()) {
+    // TODO also need to add liquid lib registration...
+    global $liquid;
+
+    $template_path = THEME_ROOT.'/views/'.$template.'.liquid';
+    $liquid->parse(file_get_contents($template_path));
+
+    print $liquid->render($args);
   }
 
 
@@ -95,6 +110,11 @@ class Plumber {
         return $merged_definition;
       }
     }
+  }
+
+
+  private static function get_route_by_id($id) {
+    return $GLOBALS['wp_plumber_routes'][$id];
   }
 
 
