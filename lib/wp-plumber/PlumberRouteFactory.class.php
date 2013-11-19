@@ -5,16 +5,17 @@ class PlumberRouteFactory {
 
   public static function create_routes($args) {
     if(array_key_exists('routes', $args)) {
+      $routes = $args['routes'];
 
+      // apply route templates if they are provided
       if(array_key_exists('route_templates', $args)) {
         $routes = self::apply_all_templates(
-          $args['routes'],
+          $routes,
           $args['route_templates']
         );
-      } else {
-        $routes = $args['routes'];
       }
 
+      // set additional helper attributes and create route object
       $rank = 0;
       foreach($routes as $route => $definition) {
         $definition['id'] = $rank;

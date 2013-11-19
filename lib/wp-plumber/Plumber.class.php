@@ -4,7 +4,13 @@ class Plumber {
 
 
   public static function set_views_directory($dir) {
-    self::set_global('views_directory', $dir);
+    $full_path = get_stylesheet_directory().'/'.$dir.'/';
+    self::set_global('views_directory', $full_path);
+  }
+
+
+  public static function set_view_render_fn($fn) {
+    self::set_global('view_render_fn', $fn);
   }
 
 
@@ -23,9 +29,21 @@ class Plumber {
   }
 
 
+  public static function set_alias($alias_hash) {
+    foreach($alias_hash as $alias => $target) {
+      // TODO
+      // create a special bare bones route with following callback:
+      //
+      // header('Location: ' . $url, true, $statusCode);
+      // die();
+    }
+  }
+
+
   public static function create_routes() {
     $args = $GLOBALS['wp_plumber_user_defined'];
     PlumberRouteFactory::create_routes($args);
+var_dump($GLOBALS['wp_plumber_routes']);
   }
 
 

@@ -21,9 +21,10 @@ class PlumberRoute {
     $pre_render_args['query_vars'] = $query_vars;
 
     $render_args = self::preprocessor($pre_render_args);
-
     $template = $this->plumber_definition['view_template'];
-    render_liquid_template($template, $render_args);
+    $template_path = $GLOBALS['wp_plumber_user_defined']['views_directory'];
+    $render_fn = $GLOBALS['wp_plumber_user_defined']['view_render_fn'];
+    call_user_func($render_fn, $template_path.$template, $render_args);
 
     self::postprocessor($render_args);
   }
