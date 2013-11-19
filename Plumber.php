@@ -17,6 +17,10 @@ require_once($plumber_plugin_directory.'/PlumberRouteFactory.class.php');
 require_once($plumber_plugin_directory.'/PlumberPods.class.php');
 
 add_action('wp_router_generate_routes', 
+           __NAMESPACE__.'\Plumber::create_routes', 
+          10);
+
+add_action('wp_router_generate_routes', 
            __NAMESPACE__.'\Plumber::create_router_definitions', 
           20);
 

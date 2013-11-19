@@ -17,11 +17,12 @@ class PlumberPods {
     $all_pods = array();
 
     $pod_strings = $route->plumber_definition['pods'];
-    $pod_filter_definitions = $route->plumber_definition['pod_filters'];
-    $pod_filters = self::apply_nested_query_vars($pod_filter_definitions, $query_vars);
-
-print "PLUMBER TEMPL";
-var_dump($pod_filters);
+    if(array_key_exists('pod_filters', $route->plumber_definition)) {
+      $pod_filter_definitions = $route->plumber_definition['pod_filters'];
+      $pod_filters = self::apply_nested_query_vars($pod_filter_definitions, $query_vars);
+    } else {
+      $pod_filters = array();
+    }
 
     foreach($pod_strings as $k => $pod_string) {
       // handle dynamic query vars
@@ -29,7 +30,7 @@ var_dump($pod_filters);
       if($query_var_key != false) {
         $parts = explode('[', $pod_string, 2);
         $pod_string = $parts[0];
-        $pod_id_or_slug = $query_vars[$query_var_key[1]];
+        $pod_id_or_slug = $query_vars[$query_var_key];
       }
 
       // handle alternate args keys
@@ -42,21 +43,16 @@ var_dump($pod_filters);
       }
       $pod_type = $pod_string;
 
-      // fetch template if id not already defined
+      // filter by id, slug, or pod_filter
       if(isset($pod_id_or_slug)) {
         $filter_by = $pod_id_or_slug;
       } else if(array_key_exists($results_key, $pod_filters)) {
         $filter_by = $pod_filters[$results_key];
       }
 
-print "TITITITITITITTIITITITITI";
-var_dump($pod_filters);
-print "TITITITITITITTIITITITITI";
-
       // get pods by filter (slug, id, or array of args) or all
       if(isset($filter_by)) {
         $pods = pods($pod_type, $filter_by);
-print "--------------------FILTER--------------BY-------------------";
       } else {
         $pods = pods($pod_type);
         // TODO possibly other types than post_type, like tags or categories
@@ -83,7 +79,6 @@ print "--------------------FILTER--------------BY-------------------";
 
  // get all the fields for each of the supplied pods
   private function multi_pod_fields($pods) {
-print "START MULTI POD FIELDS!!!";
     $multi_pod_fields = array();
     while($pods->fetch()) {
       $pod_fields = self::single_pod_fields($pods);
@@ -96,7 +91,7 @@ print "START MULTI POD FIELDS!!!";
   // get all the fields of a single pod
   private function single_pod_fields($pod) {
     $basic_fields = $pod->row();
-    $basic_fields["url"] = get_permalink($pod->id());
+    $basic_fields["permalink"] = get_permalink($pod->id());
 
     if(array_key_exists("post_title", $basic_fields)) {
       $basic_fields["title"] = $basic_fields["post_title"];
@@ -112,9 +107,6 @@ print "START MULTI POD FIELDS!!!";
       $basic_fields, 
       $custom_fields
     );
-
-// print "SINGLE POD FIELDS";
-// var_dump($all_fields);
 
     return $all_fields;
   }

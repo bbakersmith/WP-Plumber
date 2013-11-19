@@ -14,45 +14,25 @@ class PlumberRoute {
 
 
   public function callback($page_arguments=array()) {
-// print time();
-// print "ROUTE CALLBACK";
     $query_vars = self::get_query_vars($page_arguments);
-// print time();
-// print "ROUTE QUERY ARGS";
   
     // parse and process pods
     $pre_render_args = PlumberPods::get($this, $query_vars);
     $pre_render_args['query_vars'] = $query_vars;
-// print time();
-// print "ROUTE PODS";
 
     $render_args = self::preprocessor($pre_render_args);
-// print time();
-// print "ROUTE PREPROC";
 
     $template = $this->plumber_definition['view_template'];
     render_liquid_template($template, $render_args);
-// print time();
-// print "ROUTE RENDER";
 
     self::postprocessor($render_args);
-// print time();
-// print "ROUTE POSTPROC";
   }
 
 
   private function get_query_vars($page_arg_vals) {
-// print time();
-// print "ARG_VALS";
-// print_r($page_arg_vals);
-// print "COUNT ARG VALS";
-// print count($page_arg_vals);
     if(count($page_arg_vals) > 0) {
       $router_definition = $this->router_definition['page_arguments'];
       $arg_keys = array_slice($router_definition, 1);
-// print time();
-// print "ARG_KEYS";
-// print_r($arg_keys);
       $arg_hash = array_combine($arg_keys, $page_arg_vals);
       return $arg_hash;
     }

@@ -15,9 +15,6 @@ class PlumberRouteFactory {
         $routes = $args['routes'];
       }
 
-print "ROUTES";
-var_dump($routes);
-
       $rank = 0;
       foreach($routes as $route => $definition) {
         $definition['id'] = $rank;
