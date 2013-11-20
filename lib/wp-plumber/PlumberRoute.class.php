@@ -3,54 +3,77 @@
 class PlumberRoute {
 
 
-  public $id, $plumber_definition, $router_definition;
+  private $definition = array(
+    'id' => 999,
+    'path' => '',
+    'view_template' => false,
+    'pods' => array(),
+    'pod_filters' => array(),
+    'route_template' => false,
+    'pre_render_fn' => false,
+    'post_render_fn' => false
+  );
 
 
   function __construct($definition) {
-    $this->id = $definition['id'];
-    $this->plumber_definition = $definition;
-    $this->router_definition = self::build_router_definition($definition);
+    $this->definition = array_merge($this->definition, $definition);
   }
 
 
-  public function callback($page_arguments=array()) {
-    $query_vars = self::get_query_vars($page_arguments);
-  
-    // parse and process pods
-    $pre_render_args = PlumberPods::get($this, $query_vars);
-    $pre_render_args['query_vars'] = $query_vars;
-
-    $render_args = self::preprocessor($pre_render_args);
-    $template = $this->plumber_definition['view_template'];
-    $template_path = $GLOBALS['wp_plumber_user_defined']['views_directory'];
-    $render_fn = $GLOBALS['wp_plumber_user_defined']['view_render_fn'];
-    call_user_func($render_fn, $template_path.$template, $render_args);
-
-    self::postprocessor($render_args);
+  public function get_id() {
+    return self::get_generic_attribute('id');
   }
 
 
-  private function get_query_vars($page_arg_vals) {
-    if(count($page_arg_vals) > 0) {
-      $router_definition = $this->router_definition['page_arguments'];
-      $arg_keys = array_slice($router_definition, 1);
-      $arg_hash = array_combine($arg_keys, $page_arg_vals);
-      return $arg_hash;
+  public function get_pods() {
+    return self::get_generic_attribute('pods');
+  }
+
+
+  public function get_pod_filters() {
+    return self::get_generic_attribute('pod_filters');
+  }
+
+
+  public function get_route_vars() {
+    return self::get_generic_attribute('route_vars', array());
+  }
+
+
+  public function get_view_template() {
+    return self::get_generic_attribute('view_template');
+  }
+
+
+  public function get_pre_render_fn() {
+    return self::get_generic_attribute('pre_render_fn');
+  }
+
+
+  public function get_post_render_fn() {
+    return self::get_generic_attribute('post_render_fn');
+  }
+
+
+  private function get_generic_attribute($attribute, $default=false) {
+    if(array_key_exists($attribute, $this->definition)) {
+      return $this->definition[$attribute];
+    } else {
+      return $default;
     }
-    return false;
   }
 
 
-  private function build_router_definition($definition) {
+  public function get_router_definition() {
     $new_definition = array(
-      'path' => self::build_path($definition['path']),
-      'page_callback' => __NAMESPACE__.'\Plumber::callback',
+      'path' => self::build_path($this->definition['path']),
+      'page_callback' => 'Plumber::router_callback',
       'template' => false,
       'query_vars' => array(),
       'page_arguments' => array()
     );
 
-    $vars_and_args = self::build_vars_and_args($definition);
+    $vars_and_args = self::build_vars_and_args($this->definition);
 
     $router_definition = array_merge($new_definition, $vars_and_args);
     return $router_definition;
@@ -88,27 +111,6 @@ class PlumberRoute {
       'page_arguments' => $page_arguments
     );
     return $vars_and_args;
-  }
-
-
-  private function preprocessor($args) {
-    $result = self::user_defined_callback('preprocessor', $args);
-    return $result ? $result : $args;
-  }
-
-
-  private function postprocessor($args) {
-    return self::user_defined_callback('postprocessor', $args);
-  }
-
-
-  private function user_defined_callback($callback_key, $args) {
-    $plumber_definition = $this->plumber_definition;
-    if(isset($route[$callback_key])) {
-      $callback = $plumber_definition[$callback_key];
-      return call_user_func($callback, $args);
-    }
-    return false;
   }
 
 

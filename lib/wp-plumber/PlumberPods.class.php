@@ -6,8 +6,7 @@ class PlumberPods {
   const QUERY_VAR_REGEX = '/\[([^\]]+)\]/';
 
 
-  // takes the route object as an argument
-  public static function get($route, $query_vars) {
+  public static function get($pod_strings, $pod_filters, $query_vars) {
     // pods definition syntax
     //
     // thing                  all pods of the given type
@@ -16,12 +15,8 @@ class PlumberPods {
     //
     $all_pods = array();
 
-    $pod_strings = $route->plumber_definition['pods'];
-    if(array_key_exists('pod_filters', $route->plumber_definition)) {
-      $pod_filter_definitions = $route->plumber_definition['pod_filters'];
-      $pod_filters = self::apply_nested_query_vars($pod_filter_definitions, $query_vars);
-    } else {
-      $pod_filters = array();
+    if(count($pod_filters) > 0) {
+      $pod_filters = self::apply_nested_query_vars($pod_filters, $query_vars);
     }
 
     foreach($pod_strings as $k => $pod_string) {

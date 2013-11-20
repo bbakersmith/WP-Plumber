@@ -3,73 +3,38 @@
 class PlumberRouteFactory {
 
 
-  public static function create_routes($args) {
-    if(array_key_exists('routes', $args)) {
-      $routes = $args['routes'];
+  public static function create_routes($definitions) {
+    $new_routes = array();
 
-      // apply route templates if they are provided
-      if(array_key_exists('route_templates', $args)) {
-        $routes = self::apply_all_templates(
-          $routes,
-          $args['route_templates']
-        );
-      }
-
-      // set additional helper attributes and create route object
-      $rank = 0;
-      foreach($routes as $route => $definition) {
-        $definition['id'] = $rank;
-        $definition['path'] = $route;
-        $GLOBALS['wp_plumber_routes'][$rank] = new PlumberRoute($definition);
-        $rank++;
-      }
+    $rank = 0;
+    foreach($definitions as $path => $definition) {
+      $definition['id'] = $rank;
+      array_push($new_routes, self::create_route_object($path, $definition));
+      $rank++;
     }
+
+    return $new_routes;
   }
 
 
-  private static function apply_all_templates($routes, $templates) {
-    $all_applied_routes = array();
+  public static function create_aliases($aliases) {
+    $new_route_definitions = array();
 
-    // merge to generate initial arg set
-    foreach($routes as $route => $definition) {
-      if(array_key_exists('route_template', $definition)) {
-        $new_definition = self::apply_template($definition, $templates);
-      } else {
-        $new_definition = $definition;
+    if(count($aliases) > 0) {
+      foreach($aliases as $path => $destination) {
+        $definition = PlumberSpecialRoutes::redirect($destination);
+        $new_route_definitions[$path] = $definition;
       }
-      $all_applied_routes[$route] = $new_definition;
     }
-    return $all_applied_routes;
+var_dump($new_route_definitions);
+
+    return self::create_routes($new_route_definitions);
   }
 
 
-  private static function apply_template($definition, $templates) {
-    if(array_key_exists($definition['route_template'], $templates)) {
-      // start from the template
-      $base_definition = $templates[$definition['route_template']];
-      unset($definition['route_template']);
-
-      // add pods
-      if(array_key_exists('pods', $definition)) {
-        if(array_key_exists('pods', $base_definition)) {
-          $base_definition['pods'] = array_unique(array_merge(
-            $base_definition['pods'], 
-            $definition['pods']
-          ));
-        } else {
-          $base_definition['pods'] = $definition['pods'];
-        }
-        unset($definition['pods']);
-      }
-
-      $merged_definition = array_merge($base_definition, $definition);
-
-      if(array_key_exists('route_template', $merged_definition)) {
-        return self::apply_template($merged_definition, $templates);
-      } else {
-        return $merged_definition;
-      }
-    }
+  private static function create_route_object($path, $definition) {
+    $definition['path'] = $path;
+    return new PlumberRoute($definition);
   }
 
 
