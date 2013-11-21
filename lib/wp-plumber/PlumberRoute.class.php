@@ -83,8 +83,10 @@ class PlumberRoute {
   private function build_path($plumber_path) {
     $new_path = preg_replace('/:([^\/\s]+)/', '(.*)', $plumber_path);
 
-    if($new_path == '') {
+    if($new_path == '$') {
       $final_path = '$';
+    } else if($new_path == '*') {
+      $final_path = '.*';
     } else {
       $final_path = '^'.$new_path.'$';
     }

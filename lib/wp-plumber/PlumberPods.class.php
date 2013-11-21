@@ -73,7 +73,7 @@ class PlumberPods {
 
 
  // get all the fields for each of the supplied pods
-  private function multi_pod_fields($pods) {
+  private static function multi_pod_fields($pods) {
     $multi_pod_fields = array();
     while($pods->fetch()) {
       $pod_fields = self::single_pod_fields($pods);
@@ -84,7 +84,7 @@ class PlumberPods {
 
 
   // get all the fields of a single pod
-  private function single_pod_fields($pod) {
+  private static function single_pod_fields($pod) {
     $basic_fields = $pod->row();
     $basic_fields["permalink"] = get_permalink($pod->id());
 

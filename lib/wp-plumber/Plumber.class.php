@@ -3,16 +3,20 @@
 class Plumber {
 
 
-  private static $views_directory     = '';
+  private static $views_directory     = 'views';
   private static $view_render_fn      = ''; // TODO
   private static $route_templates     = array();
   private static $route_definitions   = array();
   private static $routes              = array();
-  private static $aliases             = array();
 
 
   public static function set_views_directory($dirname) {
     self::$views_directory = $dirname;
+  }
+
+
+  public static function get_views_directory() {
+    return self::$views_directory;
   }
 
 
@@ -34,25 +38,24 @@ class Plumber {
   }
 
 
-  public static function set_aliases($alias_hash) {
-    self::$aliases = array_merge(self::$aliases, $alias_hash);
-  }
-
-
   public static function create_routes($router) {
-// var_dump(self::$route_definitions);
+
     self::$routes = PlumberRouteFactory::create_routes(
       self::$route_definitions
     );
 
-    $alias_routes = PlumberRouteFactory::create_aliases(
-      self::$aliases
-    );
-    foreach($alias_routes as $k => $alias) {
-      self::$routes[count(self::$routes)] = $alias;
-    }
+//
+$r = self::$routes[0];
+// first route
+var_dump($r);
+// first route's router definition
+var_dump($r->get_router_definition());
+// all routes
+foreach(self::$routes as $key => $value) {
+  var_dump($value->get_router_definition());
+}
+//
 
-// var_dump(self::$routes);
     $router_definitions = self::get_router_definitions();
     foreach($router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
@@ -67,13 +70,17 @@ class Plumber {
     $id = $args[0];
     $route = self::$routes[$id];
 
+print "CALLBACK||";
+var_dump($route);
+
     $router_def = $route->get_router_definition();
     $page_arg_keys = $router_def['page_arguments'];
     $query_vars = self::get_query_vars($page_arg_keys, $args);
 
     $route_vars = $route->get_route_vars();
     $query_and_route_vars = array_merge($query_vars, $route_vars);
-  
+print "QUERY AND ROUTE VARS";
+ var_dump($query_and_route_vars); 
     // parse and process pods
     $pre_render_args = PlumberPods::get(
       $route->get_pods(),
@@ -94,6 +101,8 @@ class Plumber {
     $template_dir = self::$views_directory;
     $template = $route->get_view_template();
     $template_path = $theme_dir.'/'.$template_dir.'/'.$template;
+
+var_dump($render_args);
 
     $render_fn = self::$view_render_fn;
     call_user_func($render_fn, $template_path, $render_args);
