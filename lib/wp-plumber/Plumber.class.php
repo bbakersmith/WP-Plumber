@@ -147,6 +147,10 @@ var_dump($render_args);
 
 
   private static function apply_a_template($definition, $templates) {
+print "+++++++++++++";
+var_dump($definition);
+var_dump($templates);
+print "=============";
     if(array_key_exists($definition['route_template'], $templates)) {
       // start from the template
       $base_definition = $templates[$definition['route_template']];
