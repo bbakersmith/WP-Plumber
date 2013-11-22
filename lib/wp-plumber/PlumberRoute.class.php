@@ -11,7 +11,8 @@ class PlumberRoute {
     'pod_filters' => array(),
     'route_template' => false,
     'pre_render_fn' => false,
-    'post_render_fn' => false
+    'post_render_fn' => false,
+    'alias' => false
   );
 
 
@@ -55,6 +56,11 @@ class PlumberRoute {
   }
 
 
+  public function get_alias() {
+    return self::get_generic_attribute('alias');
+  }
+
+
   private function get_generic_attribute($attribute, $default=false) {
     if(array_key_exists($attribute, $this->definition)) {
       return $this->definition[$attribute];
@@ -65,15 +71,21 @@ class PlumberRoute {
 
 
   public function get_router_definition() {
+    $router_definition = self::build_standard_definition($this->definition);
+    return $router_definition;
+  }
+
+
+  private function build_standard_definition($plumber_definition) {
     $new_definition = array(
-      'path' => self::build_path($this->definition['path']),
+      'path' => self::build_path($plumber_definition['path']),
       'page_callback' => 'Plumber::router_callback',
       'template' => false,
       'query_vars' => array(),
       'page_arguments' => array()
     );
 
-    $vars_and_args = self::build_vars_and_args($this->definition);
+    $vars_and_args = self::build_vars_and_args($plumber_definition);
 
     $router_definition = array_merge($new_definition, $vars_and_args);
     return $router_definition;

@@ -70,17 +70,52 @@ foreach(self::$routes as $key => $value) {
     $id = $args[0];
     $route = self::$routes[$id];
 
+
+
+// ALIAS ROUTE HANDLING IN PROGRESS
+
+
 print "CALLBACK||";
-var_dump($route);
+$route_alias = $route->get_alias();
+var_dump($route_alias);
+if($route->get_alias() != false) {
+  $all_defs = self::get_router_definitions();
+  foreach($all_defs as $match_id => $def) {
+    $alias_match = preg_match_all('/'.$def['path'].'/', $route_alias, $alias_vars);
+print $def['path'];
+print '||';
+print $route_alias;
+    if($alias_match > 0) {
+      print "FUCK YES";
+var_dump($def);
+      // overwrite defaults with alias details
+      $id = $match_id;
+      $route = self::$routes[$id];
+      // spoof query vars with regex matches
+var_dump($alias_vars);
+      $args = array_merge(array($id), $alias_vars[0]);
+print "---";
+      var_dump($args); 
+print "____";
+    } else {
+      print "FUCK NO";
+    }
+  }
+}
+
+
+
 
     $router_def = $route->get_router_definition();
     $page_arg_keys = $router_def['page_arguments'];
     $query_vars = self::get_query_vars($page_arg_keys, $args);
-
+var_dump($router_def);
     $route_vars = $route->get_route_vars();
     $query_and_route_vars = array_merge($query_vars, $route_vars);
+
 print "QUERY AND ROUTE VARS";
- var_dump($query_and_route_vars); 
+var_dump($query_and_route_vars); 
+
     // parse and process pods
     $pre_render_args = PlumberPods::get(
       $route->get_pods(),
@@ -97,15 +132,18 @@ print "QUERY AND ROUTE VARS";
       $render_args = $pre_render_args;
     }
 
-    $theme_dir = get_stylesheet_directory();
-    $template_dir = self::$views_directory;
-    $template = $route->get_view_template();
-    $template_path = $theme_dir.'/'.$template_dir.'/'.$template;
-
 var_dump($render_args);
 
-    $render_fn = self::$view_render_fn;
-    call_user_func($render_fn, $template_path, $render_args);
+    // render view if view_template defined
+    $template = $route->get_view_template();
+    if($template != false) {
+      $theme_dir = get_stylesheet_directory();
+      $template_dir = self::$views_directory;
+      $template_path = $theme_dir.'/'.$template_dir.'/'.$template;
+
+      $render_fn = self::$view_render_fn;
+      call_user_func($render_fn, $template_path, $render_args);
+    }
 
     // TODO DRY
     $post_process_fn = $route->get_pre_render_fn();
