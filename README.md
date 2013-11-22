@@ -29,7 +29,7 @@ create pods in wp admin pods interface
 
 ## Routing Example
 
-```php
+:::php
 
 // functions.php
 
@@ -86,7 +86,7 @@ Plumber::set_routes(arary(
 
 ));
 
-```
+:::
 
 
 ## Routes
@@ -95,7 +95,7 @@ A route definition utilizing the full range of attributes is shown below, and fo
 
 All attributes are optional.
 
-```php
+:::php
 
 'example/user/{id}' => array(
 
@@ -122,7 +122,7 @@ All attributes are optional.
 
 )
 
-```
+:::
 
 
 ### the route path
@@ -132,7 +132,7 @@ Routes are specified by their url respective to the site's home directory, and m
 
 Routes are checked against requests in the order they are defined, so if multiple routes match a request then only the first will be called.
 
-```php
+:::php
 
 // http://example.com/something
 'something' => array();
@@ -143,11 +143,11 @@ Routes are checked against requests in the order they are defined, so if multipl
 // http://example.com/thing/my-thing-name
 'thing/{thing_name}' => array();
 
-```
+:::
 
 There are a few special route identifiers as well.
 
-```php
+:::php
 
 // site root
 // http://example.com
@@ -156,7 +156,7 @@ There are a few special route identifiers as well.
 // catch all route for 404 errors; place after all other routes
 '$' => array();
 
-```
+:::
 
 
 ### route_template
@@ -180,19 +180,19 @@ Specify pods to fetch for the route.
 
 Pods are are identified by strings that may have up to three parts.
 
-```
+:::
 selector:pod_type{query_var}
-```
+:::
 
 - **selector**
   - optional; specifies the name of the variable in which the corresponding pod data will be stored; if not included, pod data will be stored in a variable with the same name as the pod.
   - allows for routes with different pod types to share templates by providing data in the same variable
 
-```
+:::
 'content:about_page_settings'
 
 'content:contact_page_settings'
-```
+:::
 
 - **pod_type**
   - required; this is the name of the pod
@@ -200,13 +200,13 @@ selector:pod_type{query_var}
 - **query_var**
   - optional; corresponds with a named variable in the route path or route_vars
 
-```php
+:::php
 
 'thing/{thing_num}' => array(
   'pods' => array('things{thing_num}')
 )
 
-```
+:::
 
 
 ### pod_filters
@@ -214,7 +214,7 @@ selector:pod_type{query_var}
 
 Define filters associated with pods by their selector. This allows for filtering, sorting, limiting, and paginating pods. As with pods, filter attribute values may contain route_vars denoted by {}. 
 
-```php
+:::php
 
 'stuff/{page_num}' => array(
   'pods' => array('things'),
@@ -229,7 +229,7 @@ Define filters associated with pods by their selector. This allows for filtering
   )
 )
 
-```
+:::
 
 
 ### route_vars
@@ -239,7 +239,7 @@ Associative array of attributes and values that will be merged with any dynamic 
 
 The first two routes will produce the same results, but http://example.com/articles/2 would produce the second page of articles.
 
-```php
+:::php
 
 // http://example.com/articles
 'articles' => array(
@@ -252,7 +252,7 @@ The first two routes will produce the same results, but http://example.com/artic
   route_template => 'articles_listing'
 )
 
-```
+:::
 
 
 ### pre_render_fn
@@ -260,11 +260,11 @@ The first two routes will produce the same results, but http://example.com/artic
 
 Name of function to call before the view rendering function. The specified function will be called with a single argument: the full array of pod data and route vars. The function may be used to filter, modify, or add to this data, simply returning the altered array. If the function is not intended to modify the data set, but rather to serve some other function, return false to have Plumber retain the original data set.
 
-```php
+:::php
 
 'pre_render_fn' => 'capitalize_all_titles'
 
-```
+:::
 
 ### post_render_fn
 *string*
@@ -281,7 +281,7 @@ Route templates may contain any or all of the attributes available to route defi
 
 Attributes in assigned templates are only applied if not already defined in the associated route. The exception is pods and pod_filters, which are always merged. Pods and pod_filters with identical selectors will respect the order of inheritance like other attributes.
 
-```php
+:::php
 
 // functions.php
 
@@ -296,7 +296,7 @@ Plumber::set_route_templates(array(
 
 ));
 
-```
+:::
 
 
 ---
@@ -306,7 +306,7 @@ Plumber::set_route_templates(array(
 
 The default views directory is a 'views' subdirectory of your main theme folder. If views are stored elsewhere, assign the directory relative to the main theme directory.
 
-```php
+:::php
 
 // functions.php
 
@@ -316,7 +316,7 @@ Plumber::set_views_directory('templates');
 // path/to/wp/theme
 Plumber::set_views_directory('');
 
-```
+:::
 
 By default WP Plumber supports rendering of basic PHP templates, simply including them and passing in the pod data, query variables, and user arguments. 
 
@@ -358,4 +358,5 @@ There are a number of attributes which are available by default from Pods. These
   - tags_input
   - permalink
   - title
+
 
