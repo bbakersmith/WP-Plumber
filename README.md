@@ -1,4 +1,5 @@
 # WP Plumber
+
 WP Plumber is an MVC plugin for Wordpress. 
 
 WP Plumber attempts to utilize the best parts of Wordpress: admin UI elements, easy database setup, plugin ecosystem, broad support, media management and image conversion, while freeing the developer from the Wordpress loop by providing 
@@ -26,7 +27,7 @@ create pods in wp admin pods interface
 
 
 
-## Routing Basics
+## Routing Example
 
 ```php
 
@@ -88,91 +89,7 @@ Plumber::set_routes(arary(
 ```
 
 
-
-## Route Templates
-
-Route templates may contain any or all of the attributes available to route definitions, including 'route_template' for cascading template inheritance. Instead of a route, route templates are given an arbitrary identifier, 'basic_page' in the example below.
-
-Attributes in assigned templates are only applied if not already defined in the associated route. The exception is pods and pod_filters, which are always merged. Pods and pod_filters with identical selectors will respect the order of inheritance like other attributes.
-
-```php
-
-// functions.php
-
-Plumber::set_route_templates(array(
-
-  
-  'basic_page' => array(
-    'pods' => array('settings:global_settings', 'featured_articles'),
-    'view_template' => 'pages/basic'
-  )
-
-
-));
-
-```
-
-
-
-## View Rendering
-
-The default views directory is a 'views' subdirectory of your main theme folder. If views are stored elsewhere, assign the directory relative to the main theme directory.
-
-```php
-
-// functions.php
-
-// path/to/wp/theme/templates
-Plumber::set_views_directory('templates');
-
-// path/to/wp/theme
-Plumber::set_views_directory('');
-
-```
-
-By default WP Plumber supports rendering of basic PHP templates, simply including them and passing in the pod data, query variables, and user arguments. 
-
-
-
-## Pods
-
-#### Protected Pod Attribute Names
-There are a number of attributes which are available by default from Pods. These field names include the following, and should be avoided when creating new custom pods. The attributes below are included in the pod data supplied to all render functions, and are therefore accessible to templates alongside the custom pod fields.
-
-  - ID
-  - post_author
-  - post_date
-  - post_date_gmt
-  - post_content
-  - post_title
-  - post_excerpt
-  - post_status
-  - comment_status
-  - ping_status
-  - post_password
-  - post_name
-  - to_ping
-  - pinged
-  - post_modified
-  - post_modified_gmt
-  - post_content_filtered
-  - post_parent
-  - guid
-  - menu_order
-  - post_type
-  - post_mime_type
-  - comment_count
-  - filter
-  - ancestors
-  - post_category
-  - tags_input
-  - permalink
-  - title
-
-
-
-## Route Definition Attributes
-
+## Routes
 
 A route definition utilizing the full range of attributes is shown below, and following is the documentation for each attribute.
 
@@ -208,7 +125,7 @@ All attributes are optional.
 ```
 
 
-#### the route path
+### the route path
 *string*
 
 Routes are specified by their url respective to the site's home directory, and may include dynamic variables specified by {}.
@@ -242,7 +159,7 @@ There are a few special route identifiers as well.
 ```
 
 
-#### route_template
+### route_template
 *string*
 
 Specify a template to inherit from.
@@ -250,13 +167,13 @@ Specify a template to inherit from.
 May contain any or all of the attributes available to route definitions, including route_template for cascading inheritance.
 
 
-#### view_template
+### view_template
 *string*
 
 Specify a view template relative to the views directory. This template file is passed to the render function along with the pod data and other args. As such, it can be basic php or a templating format like Liquid or Mustache.
 
 
-#### pods
+### pods
 *array*
 
 Specify pods to fetch for the route.
@@ -292,8 +209,7 @@ selector:pod_type{query_var}
 ```
 
 
-
-#### pod_filters
+### pod_filters
 *array*
 
 Define filters associated with pods by their selector. This allows for filtering, sorting, limiting, and paginating pods. As with pods, filter attribute values may contain route_vars denoted by {}. 
@@ -316,7 +232,7 @@ Define filters associated with pods by their selector. This allows for filtering
 ```
 
 
-#### route_vars
+### route_vars
 *array*
 
 Associative array of attributes and values that will be merged with any dynamic variables defined in the route. In the case of identical keys, variables defined in the route will take precedent over those defined in route_vars. In this way, route_vars provide a way of settings default values in a shared route template for attributes that may be defined dynamically in some routes but not in others.
@@ -339,7 +255,7 @@ The first two routes will produce the same results, but http://example.com/artic
 ```
 
 
-#### pre_render_fn
+### pre_render_fn
 *string*
 
 Name of function to call before the view rendering function. The specified function will be called with a single argument: the full array of pod data and route vars. The function may be used to filter, modify, or add to this data, simply returning the altered array. If the function is not intended to modify the data set, but rather to serve some other function, return false to have Plumber retain the original data set.
@@ -354,3 +270,92 @@ Name of function to call before the view rendering function. The specified funct
 *string*
 
 Name of function to call after the view rendering function. The same data set that was passed to the view render function will be supplied as an argument to the post_render_fn. The return value of this function will be ignored.
+
+
+---
+
+
+## Route Templates
+
+Route templates may contain any or all of the attributes available to route definitions, including 'route_template' for cascading template inheritance. Instead of a route, route templates are given an arbitrary identifier, 'basic_page' in the example below.
+
+Attributes in assigned templates are only applied if not already defined in the associated route. The exception is pods and pod_filters, which are always merged. Pods and pod_filters with identical selectors will respect the order of inheritance like other attributes.
+
+```php
+
+// functions.php
+
+Plumber::set_route_templates(array(
+
+  
+  'basic_page' => array(
+    'pods' => array('settings:global_settings', 'featured_articles'),
+    'view_template' => 'pages/basic'
+  )
+
+
+));
+
+```
+
+
+---
+
+
+## View Rendering
+
+The default views directory is a 'views' subdirectory of your main theme folder. If views are stored elsewhere, assign the directory relative to the main theme directory.
+
+```php
+
+// functions.php
+
+// path/to/wp/theme/templates
+Plumber::set_views_directory('templates');
+
+// path/to/wp/theme
+Plumber::set_views_directory('');
+
+```
+
+By default WP Plumber supports rendering of basic PHP templates, simply including them and passing in the pod data, query variables, and user arguments. 
+
+
+---
+
+
+## Pods
+
+### Protected Pod Attribute Names
+There are a number of attributes which are available by default from Pods. These field names include the following, and should be avoided when creating new custom pods. The attributes below are included in the pod data supplied to all render functions, and are therefore accessible to templates alongside the custom pod fields.
+
+  - ID
+  - post_author
+  - post_date
+  - post_date_gmt
+  - post_content
+  - post_title
+  - post_excerpt
+  - post_status
+  - comment_status
+  - ping_status
+  - post_password
+  - post_name
+  - to_ping
+  - pinged
+  - post_modified
+  - post_modified_gmt
+  - post_content_filtered
+  - post_parent
+  - guid
+  - menu_order
+  - post_type
+  - post_mime_type
+  - comment_count
+  - filter
+  - ancestors
+  - post_category
+  - tags_input
+  - permalink
+  - title
+
