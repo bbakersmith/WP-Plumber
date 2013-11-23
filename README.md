@@ -2,10 +2,9 @@
 
 **THIS PLUGIN IS NOT YET READY FOR PUBLIC USE**
 
-WP Plumber is an MVC plugin for Wordpress. 
+WP Plumber is an MVC plugin for Wordpress that attempts to utilize the best parts of Wordpress: admin UI elements, easy database setup, plugin ecosystem, broad support, media management and image conversion, while freeing the developer from the Wordpress Loop and assumed routing.
 
-WP Plumber attempts to utilize the best parts of Wordpress: admin UI elements, easy database setup, plugin ecosystem, broad support, media management and image conversion, while freeing the developer from the Wordpress loop by providing 
-leverages WP Router to provide a concise, flexible, routing interface; integrates tightly with Pods to provide highly customizable and easily accessible data models; supports basic php view templates out of the box, and can easily by integrated with user-defined view templating libraries or functions.
+WP Plumber leverages WP Router to provide a concise, flexible, routing interface; integrates tightly with Pods to provide highly customizable and easily accessible data models; supports basic php view templates out of the box, but can easily by integrated with external templating libraries.
 
 
 - [Installation](#installation) 
@@ -48,7 +47,15 @@ define pods in Pods admin GUI
 
 ## Introduction <a name="introduction"></a>
 
-*(( UML diagram(s) here))*
+WP Plumber's primary goal is to provide a concise interface for defining routes and matching pod data with view templates.
+
+A sequence diagram showing a visitor request to WP Plumber is shown below. All WP Plumber functionality is optional, as some routes may not require pods, many others will not define pre_render or post_render functions, and occasionally (as with redirects) a view may not be rendered at all. That said, the pre_render and post_render functions are dashed in the diagram to indicate that they are less likely to be called for the average request.
+
+
+![Plumber Sequence Diagram](http://bitsynthesis.com/wp-content/uploads/wp-plumber-sequence-diagram.png)
+
+
+Configuring WP Router can be as simple as defining some routes in functions.php and creating associated html/php templates in a "views" subdirectory of your theme.
 
 
 *functions.php*
@@ -61,8 +68,8 @@ Plumber::set_routes(array(
   ),
 
   // defines a basic page with CMS managed settings
-  'basic' => array(
-    'pods' => array('basic_page_settings'),
+  'about-me' => array(
+    'pods' => array('settings:about_page_settings'),
     'view_template' => 'pages/basic'
   ),
 
@@ -90,6 +97,14 @@ Plumber::set_routes(array(
 ```php
 <header>
   <h1>This is the homepage.</h1>
+</header>
+```
+
+
+*views/pages/basic.php*
+```php
+<header>
+  <h1><?php echo('$settings['big_title']) ?></h1>
 </header>
 ```
 
@@ -124,9 +139,25 @@ Plumber::set_routes(array(
 
 ## Routes <a name="routes"></a>
 
-A route definition utilizing the full range of attributes is shown below, and following is the documentation for each attribute.
+- [the route path](#the_route_path)
+- [view_template](#route_view_template)
+- [pods](#route_pods)
+- [pod_filters](#route_pod_filters)
+- [route_vars](#route_route_vars)
+- [pre_render_fn](#route_pre_render_fn)
+- [post_render_fn](#route_post_render_fn)
+- [route_template](#route_route_template)
 
-All attributes are optional.
+Routes are defined as relative URL strings, and may include dynamic variable segments. Each route has an associated array of attributes which includes all the details necessary for executing a request made to that route. This may include: 
+
+- which pods to retrive
+- pre_render function for modifying or adding to data for the view
+- which view template to use
+- post_render function for executing code after everything else
+
+All attributes are optional, and most route definitions will not require all attributes.
+
+A route definition utilizing the full range of attributes is shown below. See the [section on Routes](#routes) for individual attribute documentation.
 
 ```php
 Plumber::set_routes(array(
@@ -134,7 +165,7 @@ Plumber::set_routes(array(
   // http://example.com/user/my-user-id
   'user/{id}' => array(
 
-    'route_template' => 'global',
+    'view_template' => 'pages/example',
 
     'pods' => array('users{id}', 'settings:user_page_settings', 'advertisements'),
 
@@ -153,7 +184,7 @@ Plumber::set_routes(array(
 
     'post_render_fn' => 'log_something',
 
-    'view_template' => 'pages/example'
+    'route_template' => 'global'
 
   )
 
@@ -161,7 +192,7 @@ Plumber::set_routes(array(
 ```
 
 
-#### the route path
+#### the route path <a name="the_route_path"></a>
 *string*
 
 Routes are specified by their url respective to the site's home directory, and may include dynamic variables specified by {}.
@@ -199,21 +230,13 @@ Plumber::set_routes(array(
 ```
 
 
-#### route_template
-*string*
-
-Specify a template to inherit from.
-
-May contain any or all of the attributes available to route definitions, including route_template for cascading inheritance.
-
-
-#### view_template
+#### view_template <a name="route_view_template"></a>
 *string*
 
 Specify a view template relative to the views directory. This template file is passed to the render function along with the pod data and other args. As such, it can be basic php or a templating format like Liquid or Mustache.
 
 
-#### pods
+#### pods <a name="route_pods"></a>
 *array*
 
 Specify pods to fetch for the route.
@@ -264,7 +287,7 @@ Plumber::set_routes(array(
 ```
 
 
-#### pod_filters
+#### pod_filters <a name="route_pod_filters"></a>
 *array*
 
 Define filters associated with pods by their selector. This allows for filtering, sorting, limiting, and paginating pods. As with the pods attribute, filter attribute values may contain route_vars denoted by {}. 
@@ -291,13 +314,14 @@ Plumber::set_routes(array(
 ```
 
 
-#### route_vars
+#### route_vars <a name="route_route_vars"></a>
 *array*
 
 Associative array of attributes and values that will be merged with any dynamic variables defined in the route. In the case of identical keys, variables defined in the route will take precedent over those defined in route_vars. In this way, route_vars provide a way of settings default values in a shared route template for attributes that may be defined dynamically in some routes but not in others.
 
 The first two routes will produce the same results, but http://example.com/articles/2 would produce the second page of articles.
 
+*functions.php*
 ```php
 Plumber::set_routes(array(
 
@@ -323,14 +347,24 @@ Plumber::set_route_templates(array(
       'articles' => array(
         'page' => '{page_num}'
       )
-    )
+    ),
+    'view_template' => 'pages/articles'
   );
 
 ));
 ```
 
+*views/pages/articles*
+```php
+<span>This page is number <?php echo($route_vars('page_num')) ?>.</span>
 
-#### pre_render_fn
+<?php foreach($articles as $article) { ?>
+  // render some articles
+<?php } ?>
+```
+
+
+#### pre_render_fn <a name="route_pre_render_fn"></a>
 *string*
 
 Name of function to call before the view rendering function. The specified function will be called with a single argument: the full array of pod data and route vars. The function may be used to filter, modify, or add to this data, simply returning the altered array. If the function is not intended to modify the data set, but rather to serve some other function, return false to have Plumber retain the original data set.
@@ -351,7 +385,7 @@ function capitalize_all_titles($args) {
 }
 ```
 
-#### post_render_fn
+#### post_render_fn <a name="route_post_render_fn"></a>
 *string*
 
 Name of function to call after the view rendering function. The same data set that was passed to the view render function will be supplied as an argument to the post_render_fn. The return value of this function will be ignored.
@@ -361,10 +395,21 @@ Name of function to call after the view rendering function. The same data set th
 ```
 
 
+#### route_template <a name="route_route_template"></a>
+*string*
+
+Specify a template to inherit from.
+
+May contain any or all of the attributes available to route definitions, including route_template for cascading inheritance.
+
+
+
 ---
 
 
 ## Route Templates <a name="route_templates"></a>
+
+To help DRY your route definitions, Plumber also provides the ability to create Route Templates. These are named route templates from which standard Routes can inherit. Route Templates may also define a template to inherit from, enabling cascading Route Template inheritance.
 
 Route templates may contain any or all of the attributes available to route definitions, including 'route_template' for cascading template inheritance. Instead of a route, route templates are given an arbitrary identifier, 'basic_page' in the example below.
 
@@ -521,5 +566,6 @@ Plumber::set_routes(array(
 
 ));
 ```
+
 
 
