@@ -493,9 +493,78 @@ Plumber::set_views_directory('templates');
 Plumber::set_views_directory('');
 ```
 
-By default WP Plumber supports rendering of basic PHP templates, simply including them and passing in the pod data, route variables, and user arguments. 
+#### view_render_fn
 
-**NEED TO PROVIDE EXAMPLES OF RENDER FUNCTIONS: BASIC PHP, LIQUID, MUSTACHE**
+By default WP Plumber supports rendering of basic PHP templates, simply including them and passing in the pod data, route variables, and user arguments.
+
+Users can also define their own view render functions, thus enabling the use of external templating libraries like Liquid and Mustache. A basic view render function looks like this.
+
+```php
+function render_my_view($template, $data) {
+  // convert first level of $data keys to local variables, enabling easier
+  // access in the views. this is optional, as you could just reference
+  // $data as is from within your views
+  extract($data);
+
+  // include the template file, full file path provided
+  include($template.'.php');
+}
+```
+
+$data will always have the attribute 'route_vars', which may be empty if no route_vars are defined in the route path or the route_vars attribute. In addition, it contains all the pod data retrieved for the current route. Each array of pod data is stored with a key matching its selector (or its pod type if a selector is not explicitly defined).
+
+The following is an example $data structure:
+
+*functions.php*
+```php
+Plumber::set_routes(array(
+
+  'articles/{id}' => array(
+    'pods' => array(
+      'settings:global_settings', 
+      'advertisements',
+      'articles{id}'
+    )
+    'route_vars' => array(
+      'other' => 'thing'
+    )
+  )
+
+));
+```
+
+*resulting $data structure for http://example.com/articles/2*
+```php
+$data = array(
+
+  'route_vars' => array(
+    'id' => 2,
+    'other' => 'thing'
+  ),
+
+  'settings' => // global settings pod data
+
+  'advertisements' => // nested array of all individual advertisement pod data
+
+  'articles' => // article pod data for article with id == 2
+
+)
+```
+
+
+#### liquid view_render_fn
+
+To render Liquid templates using the php-liquid library (which must be included separately) along with a class of Liquid helper functions:
+
+```php
+function render_liquid_template($template, $data = array()) {
+  $liquid = new LiquidTemplate(Plumber::get_views_directory());
+  $liquid->registerFilter(new MyLiquidHelpers());
+
+  $liquid->parse(file_get_contents($template.'.liquid'));
+  print $liquid->render($data);
+}
+```
 
 
 ---
