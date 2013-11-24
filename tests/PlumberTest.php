@@ -4,8 +4,12 @@ require_once('Plumber.php');
 require_once('tests/functions.php');
 
 
-class WPRouterTest {
+class WPRouterStub {
   public function add_route($path, $definition) {}
+}
+
+class WPPodsStub {
+  public function pods($pod_type, $filter=false) {}
 }
 
 
@@ -13,7 +17,19 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   protected function setUp() {
+    global $wp_router_stub, $wp_plumber_stub;
 
+    $wp_router_stub = $this->getMock('WPRouterStub');
+    $wp_router_stub->expects($this->any())
+          ->method('add_route')
+          ->with(2) // parameters that are expected
+          ->will($this->returnValue('foo'));
+
+    $wp_plumber_stub = $this->getMock('Plumber');
+    $wp_plumber_stub::staticExpects($this->any())
+          ->method('get_all_pod_data')
+          ->with(3)
+          ->will($this->returnValue('burp'));
   }
 
 
@@ -23,15 +39,9 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   public function testRouteDefinitions() {
     // ensure that proper route definitions are being passed
     // to WP Router
+    global $wp_router_stub, $wp_plumber_stub;
 
-    $stub = $this->getMock('WPRouterTest');
-    $stub->expects($this->any())
-         ->method('add_route')
-         ->with(2) // parameters that are expected
-         ->will($this->returnValue('foo'));
-
-    Plumber::create_routes($stub);
-
+    $wp_plumber_stub::create_routes($wp_router_stub);
   }
 
 

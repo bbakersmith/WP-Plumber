@@ -66,17 +66,18 @@ class Plumber {
 
     $router_def = $route->get_router_definition();
     $page_arg_keys = $router_def['page_arguments'];
-    $query_vars = self::get_query_vars($page_arg_keys, $args);
+    $query_vars = static::get_query_vars($page_arg_keys, $args);
 
     $route_vars = $route->get_route_vars();
     $query_and_route_vars = array_merge($query_vars, $route_vars);
 
     // parse and process pods
-    $pre_render_args = PlumberPods::get(
+    $pre_render_args = static::get_all_pod_data(
       $route->get_pods(),
       $route->get_pod_filters(), 
       $query_and_route_vars
     );
+
     $pre_render_args['query_vars'] = $query_and_route_vars;
 
     // TODO DRY
@@ -117,6 +118,11 @@ class Plumber {
       print '<hr /><h5>$render_args</h5><hr />';
       var_dump($render_args);
     }
+  }
+
+
+  private static function get_all_pod_data($pods, $filters, $route_vars) {
+    return Plumber::get($pods, $filters, $route_vars);
   }
 
 
