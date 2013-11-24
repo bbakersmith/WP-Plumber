@@ -47,12 +47,12 @@ class PlumberPods {
 
       // get pods by filter (slug, id, or array of args) or all
       if(isset($filter_by)) {
-        $pods = pods($pod_type, $filter_by);
+        $pods = static::get_pods($pod_type, $filter_by);
       } else {
-        $pods = pods($pod_type);
+        $pods = static::get_pods($pod_type);
         // TODO possibly other types than post_type, like tags or categories
         if(self::get_object_type($pods) == 'post_type') {
-          $pods = pods($pod_type, array()); 
+          $pods = static::get_pods($pod_type, array()); 
         }
       }
 
@@ -69,6 +69,15 @@ class PlumberPods {
     }
 
     return $all_pods;
+  }
+
+
+  public static function get_pods($pod_type, $filter=false) {
+    if($filter == false) { 
+      return pods($pod_type);
+    } else {
+      return pods($pod_type, $filter);
+    }
   }
 
 

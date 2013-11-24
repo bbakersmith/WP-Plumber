@@ -46,12 +46,11 @@ class Plumber {
       self::$route_definitions,
       self::$route_templates
     );
-
     self::$routes = PlumberRouteFactory::create_routes(
       self::$route_definitions
     );
 
-    $router_definitions = self::get_router_definitions();
+    $router_definitions = static::get_router_definitions();
     foreach($router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
     }
@@ -131,7 +130,6 @@ class Plumber {
   }
 
 
-  // need to mock create_router_definitions
   private static function get_router_definitions() {
     $all_definitions = array();
     foreach(self::$routes as $route) {
@@ -139,7 +137,6 @@ class Plumber {
     }
     return $all_definitions;
   }
-
 
 
 }

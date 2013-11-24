@@ -1,49 +1,38 @@
 <?php
 
 require_once('Plumber.php');
+require_once('tests/functions.php');
+
+
+class WPRouterTest {
+  public function add_route($path, $definition) {}
+}
+
 
 class PlumberTest extends PHPUnit_Framework_TestCase {
 
+
   protected function setUp() {
 
-    $this->routes = array(
-
-      '' => array(
-        'pods' => array('home_settings'),
-        'route_template' => 'second'
-      ),
-
-      'basic' => array(
-        'pods' => array('home_settings')
-      ),
-
-      'variable/:first/:second' => array(
-        'pods' => array('name:thing[second]'),
-        'view_template' => 'things/single'
-      )
-
-    );
-
-    $this->route_templates = array(
-      'second' => array(
-        'view_template' => 'second',
-        'route_template' => 'third'
-      ),
-
-      'third' => array(
-        'view_template' => 'third',
-        'pods' => array('global_settings')
-      )
-    );
-
-    Plumber::register_routes(array(
-      'routes' => $this->routes,
-      'route_templates' => $this->route_templates
-    ));
   }
 
 
   // tests
+
+
+  public function testRouteDefinitions() {
+    // ensure that proper route definitions are being passed
+    // to WP Router
+
+    $stub = $this->getMock('WPRouterTest');
+    $stub->expects($this->any())
+         ->method('add_route')
+         ->with(2) // parameters that are expected
+         ->will($this->returnValue('foo'));
+
+    Plumber::create_routes($stub);
+
+  }
 
 
   public function testBasicRouteInitilization() {
@@ -67,26 +56,26 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   }
 
 
-  public function testWPRouterDefinitionGeneration() {
-    $definitions = Plumber::generate_route_definitions();
-    $target_definition = $definitions[2];
+  // public function testWPRouterDefinitionGeneration() {
+  //   $definitions = Plumber::generate_route_definitions();
+  //   $target_definition = $definitions[2];
 
-    $expected_path = '^variable/([^\/\s]+)/([^\/\s]+)$';
+  //   $expected_path = '^variable/([^\/\s]+)/([^\/\s]+)$';
 
-    $this->assertEquals($expected_path, $target_definition['path']);
-    $this->assertEquals(false, $target_definition['template']); 
+  //   $this->assertEquals($expected_path, $target_definition['path']);
+  //   $this->assertEquals(false, $target_definition['template']); 
 
-    $this->assertEquals(1, $target_definition['query_vars']['first']);
-    $this->assertEquals(2, $target_definition['query_vars']['second']);
+  //   $this->assertEquals(1, $target_definition['query_vars']['first']);
+  //   $this->assertEquals(2, $target_definition['query_vars']['second']);
 
-    $this->assertEquals('first', $target_definition['page_arguments'][1]);
-    $this->assertEquals('second', $target_definition['page_arguments'][2]);
-  }
+  //   $this->assertEquals('first', $target_definition['page_arguments'][1]);
+  //   $this->assertEquals('second', $target_definition['page_arguments'][2]);
+  // }
 
 
   public function testRouteCallback() {
     $id = 2;
-    $callback = Plumber::callback($id, 'firstval', 'secondval');
+    $callback = Plumber::router_callback($id, 'firstval', 'secondval');
     print "route: ";
     print_r($GLOBALS['wp_plumber_routes'][$id]);
     print "callback: ";

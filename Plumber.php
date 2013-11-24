@@ -13,10 +13,13 @@
 $plumber_plugin_directory = dirname(__FILE__).'/lib/wp-plumber/';
 require_once($plumber_plugin_directory.'/Plumber.class.php');
 require_once($plumber_plugin_directory.'/PlumberRoute.class.php');
-require_once($plumber_plugin_directory.'/PlumberSpecialRoutes.class.php');
 require_once($plumber_plugin_directory.'/PlumberRouteFactory.class.php');
+require_once($plumber_plugin_directory.'/PlumberPodsInterface.class.php');
 require_once($plumber_plugin_directory.'/PlumberPods.class.php');
 
-add_action('wp_router_generate_routes', 'Plumber::create_routes', 20);
+// allow tests to run without loading wordpress
+if(defined('WP_PLUMBER_TEST') && WP_PLUMBER_TEST != true) {
+  add_action('wp_router_generate_routes', 'Plumber::create_routes', 20);
+}
 
 ?>

@@ -34,12 +34,6 @@ class PlumberRouteFactory {
   }
 
 
-  private static function create_route_object($path, $definition) {
-    $definition['path'] = $path;
-    return new PlumberRoute($definition);
-  }
-
-
   private static function apply_a_template($definition, $templates) {
     if(array_key_exists('route_template', $definition)) {
       if($definition['route_template'] == false) {
@@ -111,6 +105,12 @@ class PlumberRouteFactory {
 
     }
     return $new_def;
+  }
+
+
+  private static function create_route_object($path, $definition) {
+    $definition['path'] = $path;
+    return new PlumberRoute($definition);
   }
 
 
