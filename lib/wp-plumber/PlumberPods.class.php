@@ -3,7 +3,7 @@
 class PlumberPods {
 
 
-  const QUERY_VAR_REGEX = '/\[([^\]]+)\]/';
+  const QUERY_VAR_REGEX = '/\{([^\]]+)\}/';
 
 
   public static function get($pod_strings, $pod_filters, $query_vars) {

@@ -3,11 +3,17 @@
 class Plumber {
 
 
+  private static $debug               = false;
   private static $views_directory     = 'views';
   private static $view_render_fn      = ''; // TODO
   private static $route_templates     = array();
   private static $route_definitions   = array();
   private static $routes              = array();
+
+
+  public static function debug($debug_mode=false) {
+    self::$debug = $debug_mode;
+  }
 
 
   public static function set_views_directory($dirname) {
@@ -39,22 +45,9 @@ class Plumber {
 
 
   public static function create_routes($router) {
-
     self::$routes = PlumberRouteFactory::create_routes(
       self::$route_definitions
     );
-
-//
-$r = self::$routes[0];
-// first route
-var_dump($r);
-// first route's router definition
-var_dump($r->get_router_definition());
-// all routes
-foreach(self::$routes as $key => $value) {
-  var_dump($value->get_router_definition());
-}
-//
 
     $router_definitions = self::get_router_definitions();
     foreach($router_definitions as $route => $definition) {
@@ -70,51 +63,12 @@ foreach(self::$routes as $key => $value) {
     $id = $args[0];
     $route = self::$routes[$id];
 
-
-
-// ALIAS ROUTE HANDLING IN PROGRESS
-
-
-print "CALLBACK||";
-$route_alias = $route->get_alias();
-var_dump($route_alias);
-if($route->get_alias() != false) {
-  $all_defs = self::get_router_definitions();
-  foreach($all_defs as $match_id => $def) {
-    $alias_match = preg_match_all('/'.$def['path'].'/', $route_alias, $alias_vars);
-print $def['path'];
-print '||';
-print $route_alias;
-    if($alias_match > 0) {
-      print "FUCK YES";
-var_dump($def);
-      // overwrite defaults with alias details
-      $id = $match_id;
-      $route = self::$routes[$id];
-      // spoof query vars with regex matches
-var_dump($alias_vars);
-      $args = array_merge(array($id), $alias_vars[0]);
-print "---";
-      var_dump($args); 
-print "____";
-    } else {
-      print "FUCK NO";
-    }
-  }
-}
-
-
-
-
     $router_def = $route->get_router_definition();
     $page_arg_keys = $router_def['page_arguments'];
     $query_vars = self::get_query_vars($page_arg_keys, $args);
-var_dump($router_def);
+
     $route_vars = $route->get_route_vars();
     $query_and_route_vars = array_merge($query_vars, $route_vars);
-
-print "QUERY AND ROUTE VARS";
-var_dump($query_and_route_vars); 
 
     // parse and process pods
     $pre_render_args = PlumberPods::get(
@@ -132,8 +86,6 @@ var_dump($query_and_route_vars);
       $render_args = $pre_render_args;
     }
 
-var_dump($render_args);
-
     // render view if view_template defined
     $template = $route->get_view_template();
     if($template != false) {
@@ -149,6 +101,20 @@ var_dump($render_args);
     $post_process_fn = $route->get_pre_render_fn();
     if($post_process_fn != false) {
       call_user_func($post_process_fn, $pre_render_args);
+    }
+
+    if(self::$debug == true) {
+      print '<hr /><h3>WP Plumber DEBUG</h3><hr />';
+      print '<h5>$route</h5><hr />';
+      var_dump($route);
+      print '<hr /><h5>$route->get_router_definition()</h5><hr />';
+      var_dump($route->get_router_definition());
+      print '<hr /><h5>$query_and_route_vars</h5><hr />';
+      var_dump($query_and_route_vars); 
+      print '<hr /><h5>$pre_render_args</h5><hr />';
+      var_dump($pre_render_args);
+      print '<hr /><h5>$render_args</h5><hr />';
+      var_dump($render_args);
     }
   }
 
@@ -169,11 +135,7 @@ var_dump($render_args);
 
       // merge to generate initial arg set
       foreach($route_defs as $path => $definition) {
-        if(array_key_exists('route_template', $definition)) {
-          $new_definition = self::apply_a_template($definition, $templates);
-        } else {
-          $new_definition = $definition;
-        }
+        $new_definition = self::apply_a_template($definition, $templates);
         $all_applied_definitions[$path] = $new_definition;
       }
 
@@ -185,36 +147,55 @@ var_dump($render_args);
 
 
   private static function apply_a_template($definition, $templates) {
-print "+++++++++++++";
-var_dump($definition);
-var_dump($templates);
-print "=============";
+    if(array_key_exists('route_template', $definition)) {
+      if($definition['route_template'] == false) {
+        // do not apply any template if route_template is defined false
+        // or the last flag has been set to true
+        return $definition;
+      } 
+    } else {
+      // assume 'default' if route_template not defined
+      $definition['route_template'] = 'default';
+    }
+    
+    if($definition['route_template'] == 'default') {
+      $last = true;
+    } else {
+      $last = false;
+    }
+
     if(array_key_exists($definition['route_template'], $templates)) {
       // start from the template
       $base_definition = $templates[$definition['route_template']];
       unset($definition['route_template']);
 
-      // merge pods rather than overwrite
-      if(array_key_exists('pods', $definition)) {
-        if(array_key_exists('pods', $base_definition)) {
-          $base_definition['pods'] = array_unique(array_merge(
-            $base_definition['pods'], 
-            $definition['pods']
-          ));
-        } else {
-          $base_definition['pods'] = $definition['pods'];
-        }
-        unset($definition['pods']);
-      }
+      $cummulative_attribute_names = array('pods', 'pod_filters');
+      $cummulative_definitions = self::merge_cummulative_vals(
+        $definition,
+        $base_definition, 
+        $cummulative_attribute_names
+      );
 
-      $merged_definition = array_merge($base_definition, $definition);
+      $merged_definition = array_merge(
+        $base_definition, 
+        $definition,
+        $cummulative_definitions
+      );
 
-      if(array_key_exists('route_template', $merged_definition)) {
+// print '<hr/>';
+// print '<hr/>';
+// var_dump($definition);
+// print '<hr/>';
+// var_dump($merged_definition);
+// print '<hr/>';
+// print '<hr/>';
+
+      if($last == false) {
         return self::apply_a_template($merged_definition, $templates);
-      } else {
-        return $merged_definition;
       }
     }
+
+    return $definition;
   }
 
 
@@ -227,6 +208,26 @@ print "=============";
     return $all_definitions;
   }
 
+
+  private static function merge_cummulative_vals($def, $old_def, $key_names) {
+    $new_def = array();
+    foreach($key_names as $key) {
+
+      // merge pods rather than overwrite
+      if(array_key_exists($key, $def) &&
+         array_key_exists($key, $old_def)) {
+        $new_def[$key] = array_merge($old_def[$key], $def[$key]);
+      } else if(array_key_exists($key, $def)) {
+        $new_def[$key] = $def[$key];
+      } else if(array_key_exists($key, $old_def)) {
+        $new_def[$key] = $old_def[$key];
+      } else {
+        $new_def[$key] = array();
+      }
+
+    }
+    return $new_def;
+  }
 
 }
 

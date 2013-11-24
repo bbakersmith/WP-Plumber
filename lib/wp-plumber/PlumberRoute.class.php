@@ -9,10 +9,8 @@ class PlumberRoute {
     'view_template' => false,
     'pods' => array(),
     'pod_filters' => array(),
-    'route_template' => false,
     'pre_render_fn' => false,
-    'post_render_fn' => false,
-    'alias' => false
+    'post_render_fn' => false
   );
 
 
@@ -56,11 +54,6 @@ class PlumberRoute {
   }
 
 
-  public function get_alias() {
-    return self::get_generic_attribute('alias');
-  }
-
-
   private function get_generic_attribute($attribute, $default=false) {
     if(array_key_exists($attribute, $this->definition)) {
       return $this->definition[$attribute];
@@ -93,10 +86,13 @@ class PlumberRoute {
 
 
   private function build_path($plumber_path) {
-    $new_path = preg_replace('/:([^\/\s]+)/', '(.*)', $plumber_path);
+    $new_path = preg_replace('/{([^\/\s]+)}/', '(.*)', $plumber_path);
 
-    if($new_path == '$') {
+    // convert homepage symbol for WP Router
+    if($new_path == '^') {
       $final_path = '$';
+
+    // convert catch-all symbol for WP Router
     } else if($new_path == '*') {
       $final_path = '.*';
     } else {
@@ -129,7 +125,7 @@ class PlumberRoute {
 
 
   private function parse_vars($path) {
-    preg_match_all('/:([^\/\s]+)/', $path, $all_matches);
+    preg_match_all('/{([^\/\s]+)}/', $path, $all_matches);
     return $all_matches;
   }
 

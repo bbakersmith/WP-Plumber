@@ -26,7 +26,7 @@ class PlumberRouteFactory {
         $new_route_definitions[$path] = $definition;
       }
     }
-var_dump($new_route_definitions);
+// var_dump($new_route_definitions);
 
     return self::create_routes($new_route_definitions);
   }
