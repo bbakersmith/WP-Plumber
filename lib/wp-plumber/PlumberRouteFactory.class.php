@@ -3,6 +3,23 @@
 class PlumberRouteFactory {
 
 
+  public static function apply_route_templates($route_defs, $templates) {
+    if(count($route_defs) > 0 && count($templates) > 0) {
+      $all_applied_route_defs = array();
+
+      // merge to generate initial arg set
+      foreach($route_defs as $path => $definition) {
+        $new_definition = self::apply_a_template($definition, $templates);
+        $all_applied_definitions[$path] = $new_definition;
+      }
+
+      return $all_applied_definitions;
+    } else {
+      return $route_defs;
+    }
+  }
+
+
   public static function create_routes($definitions) {
     $new_routes = array();
 
@@ -17,24 +34,83 @@ class PlumberRouteFactory {
   }
 
 
-  public static function create_aliases($aliases) {
-    $new_route_definitions = array();
-
-    if(count($aliases) > 0) {
-      foreach($aliases as $path => $destination) {
-        $definition = PlumberSpecialRoutes::redirect($destination);
-        $new_route_definitions[$path] = $definition;
-      }
-    }
-// var_dump($new_route_definitions);
-
-    return self::create_routes($new_route_definitions);
-  }
-
-
   private static function create_route_object($path, $definition) {
     $definition['path'] = $path;
     return new PlumberRoute($definition);
+  }
+
+
+  private static function apply_a_template($definition, $templates) {
+    if(array_key_exists('route_template', $definition)) {
+      if($definition['route_template'] == false) {
+        // do not apply any template if route_template is defined false
+        // or the last flag has been set to true
+        return $definition;
+      } 
+    } else {
+      // assume 'default' if route_template not defined
+      $definition['route_template'] = 'default';
+    }
+    
+    if($definition['route_template'] == 'default') {
+      $last = true;
+    } else {
+      $last = false;
+    }
+
+    if(array_key_exists($definition['route_template'], $templates)) {
+      // start from the template
+      $base_definition = $templates[$definition['route_template']];
+      unset($definition['route_template']);
+
+      $cummulative_attribute_names = array('pods', 'pod_filters');
+      $cummulative_definitions = self::merge_cummulative_vals(
+        $definition,
+        $base_definition, 
+        $cummulative_attribute_names
+      );
+
+      $merged_definition = array_merge(
+        $base_definition, 
+        $definition,
+        $cummulative_definitions
+      );
+
+// print '<hr/>';
+// print '<hr/>';
+// var_dump($definition);
+// print '<hr/>';
+// var_dump($merged_definition);
+// print '<hr/>';
+// print '<hr/>';
+
+      if($last == false) {
+        return self::apply_a_template($merged_definition, $templates);
+      }
+    }
+
+    return $definition;
+  }
+
+
+  private static function merge_cummulative_vals($def, $old_def, $key_names) {
+    $new_def = array();
+    foreach($key_names as $key) {
+
+      // merge pods rather than overwrite
+      if(array_key_exists($key, $def) &&
+         array_key_exists($key, $old_def)) {
+        $new_def[$key] = array_merge($old_def[$key], $def[$key]);
+      } else if(array_key_exists($key, $def)) {
+        $new_def[$key] = $def[$key];
+      } else if(array_key_exists($key, $old_def)) {
+        $new_def[$key] = $old_def[$key];
+      } else {
+        $new_def[$key] = array();
+      }
+
+    }
+    return $new_def;
   }
 
 

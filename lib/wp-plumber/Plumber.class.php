@@ -32,19 +32,21 @@ class Plumber {
 
 
   public static function set_routes($definitions) {
-    $new_defs = self::apply_templates($definitions, self::$route_templates);
-    self::$route_definitions = $new_defs;
+    self::$route_definitions = $definitions;
   }
 
 
   public static function set_route_templates($templates) {
-    $new_defs = self::apply_templates(self::$route_definitions, $templates);
-    self::$route_definitions = $new_defs;
     self::$route_templates = $templates;
   }
 
 
   public static function create_routes($router) {
+    self::$route_definitions = PlumberRouteFactory::apply_route_templates(
+      self::$route_definitions,
+      self::$route_templates
+    );
+
     self::$routes = PlumberRouteFactory::create_routes(
       self::$route_definitions
     );
@@ -129,76 +131,6 @@ class Plumber {
   }
 
 
-  private static function apply_templates($route_defs, $templates) {
-    if(count($route_defs) > 0 && count($templates) > 0) {
-      $all_applied_route_defs = array();
-
-      // merge to generate initial arg set
-      foreach($route_defs as $path => $definition) {
-        $new_definition = self::apply_a_template($definition, $templates);
-        $all_applied_definitions[$path] = $new_definition;
-      }
-
-      return $all_applied_definitions;
-    } else {
-      return $route_defs;
-    }
-  }
-
-
-  private static function apply_a_template($definition, $templates) {
-    if(array_key_exists('route_template', $definition)) {
-      if($definition['route_template'] == false) {
-        // do not apply any template if route_template is defined false
-        // or the last flag has been set to true
-        return $definition;
-      } 
-    } else {
-      // assume 'default' if route_template not defined
-      $definition['route_template'] = 'default';
-    }
-    
-    if($definition['route_template'] == 'default') {
-      $last = true;
-    } else {
-      $last = false;
-    }
-
-    if(array_key_exists($definition['route_template'], $templates)) {
-      // start from the template
-      $base_definition = $templates[$definition['route_template']];
-      unset($definition['route_template']);
-
-      $cummulative_attribute_names = array('pods', 'pod_filters');
-      $cummulative_definitions = self::merge_cummulative_vals(
-        $definition,
-        $base_definition, 
-        $cummulative_attribute_names
-      );
-
-      $merged_definition = array_merge(
-        $base_definition, 
-        $definition,
-        $cummulative_definitions
-      );
-
-// print '<hr/>';
-// print '<hr/>';
-// var_dump($definition);
-// print '<hr/>';
-// var_dump($merged_definition);
-// print '<hr/>';
-// print '<hr/>';
-
-      if($last == false) {
-        return self::apply_a_template($merged_definition, $templates);
-      }
-    }
-
-    return $definition;
-  }
-
-
   // need to mock create_router_definitions
   private static function get_router_definitions() {
     $all_definitions = array();
@@ -209,25 +141,6 @@ class Plumber {
   }
 
 
-  private static function merge_cummulative_vals($def, $old_def, $key_names) {
-    $new_def = array();
-    foreach($key_names as $key) {
-
-      // merge pods rather than overwrite
-      if(array_key_exists($key, $def) &&
-         array_key_exists($key, $old_def)) {
-        $new_def[$key] = array_merge($old_def[$key], $def[$key]);
-      } else if(array_key_exists($key, $def)) {
-        $new_def[$key] = $def[$key];
-      } else if(array_key_exists($key, $old_def)) {
-        $new_def[$key] = $old_def[$key];
-      } else {
-        $new_def[$key] = array();
-      }
-
-    }
-    return $new_def;
-  }
 
 }
 
