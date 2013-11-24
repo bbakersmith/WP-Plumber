@@ -90,19 +90,12 @@ class Plumber {
 
     // render view if view_template defined
     $template = $route->get_view_template();
-    if($template != false) {
-      $theme_dir = get_stylesheet_directory();
-      $template_dir = self::$views_directory;
-      $template_path = $theme_dir.'/'.$template_dir.'/'.$template;
-
-      $render_fn = self::$view_render_fn;
-      call_user_func($render_fn, $template_path, $render_args);
-    }
+    static::render_view_template($template, $render_args);
 
     // TODO DRY
-    $post_process_fn = $route->get_pre_render_fn();
+    $post_process_fn = $route->get_post_render_fn();
     if($post_process_fn != false) {
-      call_user_func($post_process_fn, $pre_render_args);
+      call_user_func($post_process_fn, $render_args);
     }
 
     if(self::$debug == true) {
@@ -121,8 +114,9 @@ class Plumber {
   }
 
 
-  private static function get_all_pod_data($pods, $filters, $route_vars) {
-    return Plumber::get($pods, $filters, $route_vars);
+  protected static function get_all_pod_data($pods, $filters, $route_vars) {
+    // protected wrapper for plumber call necessary for unit testing
+    return PlumberPods::get($pods, $filters, $route_vars);
   }
 
 
@@ -142,6 +136,26 @@ class Plumber {
       $all_definitions[$route->get_id()] = $route->get_router_definition();
     }
     return $all_definitions;
+  }
+
+
+  protected static function render_view_template($template, $render_args) {
+    if($template != false) {
+
+      $full_views_path = static::get_absolute_views_directory();
+      $template_path = $full_views_path.$template;
+
+      $render_fn = self::$view_render_fn;
+      call_user_func($render_fn, $template_path, $render_args);
+
+    }
+  }
+
+
+  protected static function get_absolute_views_directory() {
+    $theme_dir = get_stylesheet_directory();
+    $template_dir = self::$views_directory;
+    return $theme_dir.'/'.$template_dir.'/';
   }
 
 

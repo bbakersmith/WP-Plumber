@@ -94,7 +94,7 @@ class PlumberRoute {
 
     // convert catch-all symbol for WP Router
     } else if($new_path == '*') {
-      $final_path = '.*';
+      $final_path = '.*$';
     } else {
       $final_path = '^'.$new_path.'$';
     }
