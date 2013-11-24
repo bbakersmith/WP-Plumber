@@ -23,6 +23,8 @@ WP Plumber leverages WP Router to provide a concise, flexible, routing interface
 
 ## Installation <a name="installation"></a>
 
+**MORE DETAILS**
+
 Install and enable **WP Router** and **Pods**.
 
 Enable permalinks, set to custom: /%category%/%post%/
@@ -34,6 +36,8 @@ Install and enable **WP Plumber**.
 
 
 ## Configuration <a name="configuration"></a>
+
+**MORE DETAILS**
 
 define routes in functions.php
 
@@ -76,9 +80,11 @@ Plumber::set_routes(array(
   // defines a paginated listing page for articles
   'articles/{page_num}' => array(
     'pods' => array('articles'),
-    'pod_filters => array(
+    'pod_filters' => array(
+      'articles' => array(
         'limit' => 5,
         'page' => '{page_num}'
+      )
     ),
     'view_template' => 'pages/articles'
   ),
