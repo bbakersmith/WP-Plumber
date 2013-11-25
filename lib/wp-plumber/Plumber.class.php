@@ -46,12 +46,12 @@ class Plumber {
       self::$route_definitions,
       self::$route_templates
     );
-    self::$routes = PlumberRouteFactory::create_routes(
+    self::$routes = static::create_routes_with_factory(
       self::$route_definitions
     );
 
-    $router_definitions = static::get_router_definitions();
-    foreach($router_definitions as $route => $definition) {
+    $wp_router_definitions = static::get_wp_router_definitions();
+    foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
     }
   }
@@ -114,6 +114,11 @@ class Plumber {
   }
 
 
+  protected static function create_routes_with_factory($route_definitions) {
+    return PlumberRouteFactory::create_routes($route_definitions);
+  }
+
+
   protected static function get_all_pod_data($pods, $filters, $route_vars) {
     // protected wrapper for plumber call necessary for unit testing
     return PlumberPods::get($pods, $filters, $route_vars);
@@ -130,7 +135,7 @@ class Plumber {
   }
 
 
-  private static function get_router_definitions() {
+  private static function get_wp_router_definitions() {
     $all_definitions = array();
     foreach(self::$routes as $route) {
       $all_definitions[$route->get_id()] = $route->get_router_definition();
