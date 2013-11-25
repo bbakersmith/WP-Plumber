@@ -36,6 +36,11 @@ class Plumber {
   }
 
 
+  protected static function get_route_objects() {
+    return self::$routes;
+  }
+
+
   public static function set_route_templates($templates) {
     self::$route_templates = $templates;
   }
@@ -50,7 +55,8 @@ class Plumber {
       self::$route_definitions
     );
 
-    $wp_router_definitions = static::get_wp_router_definitions();
+    $all_routes = static::get_route_objects();
+    $wp_router_definitions = static::get_wp_router_definitions($all_routes);
     foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
     }
@@ -135,9 +141,9 @@ class Plumber {
   }
 
 
-  private static function get_wp_router_definitions() {
+  protected static function get_wp_router_definitions($all_routes) {
     $all_definitions = array();
-    foreach(self::$routes as $route) {
+    foreach($all_routes as $route) {
       $all_definitions[$route->get_id()] = $route->get_router_definition();
     }
     return $all_definitions;
