@@ -43,17 +43,19 @@ class PlumberPods {
         $filter_by = $pod_id_or_slug;
       } else if(array_key_exists($results_key, $pod_filters)) {
         $filter_by = $pod_filters[$results_key];
+      } else {
+        // get single pod or all pods, depending on type
+        $filter_by = false;
       }
 
-      // get pods by filter (slug, id, or array of args) or all
-      if(isset($filter_by)) {
-        $pods = static::get_pods($pod_type, $filter_by);
-      } else {
-        $pods = static::get_pods($pod_type);
-        // TODO possibly other types than post_type, like tags or categories
-        if(self::get_object_type($pods) == 'post_type') {
-          $pods = static::get_pods($pod_type, array()); 
-        }
+      // get the pod data
+      $pods = static::get_pods($pod_type, $filter_by);
+
+      // check if it's a post type that supports multiple instances
+      // (not a settings pod) - and if it is, get all the 
+      // TODO possibly other types than post_type, like tags or categories
+      if($filter_by == false && self::get_object_type($pods) == 'post_type') {
+        $pods = static::get_pods($pod_type, array()); 
       }
 
       if(isset($pod_id_or_slug) || 
@@ -94,21 +96,28 @@ class PlumberPods {
 
   // get all the fields of a single pod
   private static function single_pod_fields($pod) {
+    // get pod metadata
     $basic_fields = $pod->row();
-    $basic_fields["permalink"] = get_permalink($pod->id());
 
+    $convenience_fields = array(
+      'permalink' => get_permalink($pod->get_id())
+    );
     if(array_key_exists("post_title", $basic_fields)) {
-      $basic_fields["title"] = $basic_fields["post_title"];
+      $convenience_fields['title'] = $basic_fields["post_title"];
     }
 
+    // create nested array from pod fields, for easier 
+    // manipulation in render functions and views
     $custom_fields = array();
     foreach($pod->fields() as $field) {
       $field_name = $field['name'];
       $custom_fields[$field_name] = $pod->field($field_name);
     }
 
+    // combine all attributes with precedent given to user fields (CMS)
     $all_fields = array_merge(
       $basic_fields, 
+      $convenience_fields, 
       $custom_fields
     );
 
