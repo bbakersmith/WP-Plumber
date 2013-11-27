@@ -2,6 +2,9 @@
 
 class Plumber {
 
+  private static $plumber_route_class = 'PlumberRoute';
+  private static $plumber_route_data_class = 'PlumberRouteData';
+  private static $plumber_pod_class = 'PlumberPod';
 
   private static $debug               = false;
   private static $views_directory     = 'views';
@@ -36,26 +39,18 @@ class Plumber {
   }
 
 
-  protected static function get_route_objects() {
-    return self::$routes;
-  }
-
-
   public static function set_route_templates($templates) {
     self::$route_templates = $templates;
   }
 
 
   public static function create_routes($router) {
-    self::$route_definitions = PlumberRouteFactory::apply_route_templates(
+    self::$routes = static::create_routes_with_factory(
       self::$route_definitions,
       self::$route_templates
     );
-    self::$routes = static::create_routes_with_factory(
-      self::$route_definitions
-    );
 
-    $all_routes = static::get_route_objects();
+    $all_routes = self::$routes;
     $wp_router_definitions = static::get_wp_router_definitions($all_routes);
     foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
@@ -98,7 +93,7 @@ class Plumber {
     $template = $route->get_view_template();
     static::render_view_template($template, $render_args);
 
-    // TODO DRY
+    // call post render function if it exists
     $post_process_fn = $route->get_post_render_fn();
     if($post_process_fn != false) {
       call_user_func($post_process_fn, $render_args);
@@ -120,14 +115,17 @@ class Plumber {
   }
 
 
-  protected static function create_routes_with_factory($route_definitions) {
-    return PlumberRouteFactory::create_routes($route_definitions);
+  protected static function create_routes_with_factory($defs, $templates) {
+    $factory = new PlumberRouteFactory(self::$plumber_route_class);
+    $routes = $factory->create_routes($defs, $templates);
+    return $routes;
   }
 
 
   protected static function get_all_pod_data($pods, $filters, $route_vars) {
-    // protected wrapper for plumber call necessary for unit testing
-    return PlumberPods::get($pods, $filters, $route_vars);
+    $factory = new PlumberPodFactory(self::$plumber_pod_class);
+    $pods = $factory->create_pods($pods, $filters, $route_vars);
+    return $pods;
   }
 
 
@@ -143,9 +141,13 @@ class Plumber {
 
   protected static function get_wp_router_definitions($all_routes) {
     $all_definitions = array();
-    foreach($all_routes as $route) {
-      $all_definitions[$route->get_id()] = $route->get_router_definition();
+
+    if(count($all_routes) > 0) {
+      foreach($all_routes as $route) {
+        $all_definitions[$route->get_id()] = $route->get_router_definition();
+      }
     }
+
     return $all_definitions;
   }
 

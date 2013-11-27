@@ -1,9 +1,23 @@
 <?php
 
-class PlumberRouteFactory {
+class PlumberRouteFactory extends PlumberFactory {
 
 
-  public static function apply_route_templates($route_defs, $templates) {
+  public function create_routes($definitions, $templates=array()) {
+    $applied_defs = self::apply_route_templates($definitions, $templates);
+
+    $new_routes = array();
+    $rank = 0;
+    foreach($applied_defs as $path => $def) {
+      $def['id'] = $rank;
+      array_push($new_routes, self::create_route_object($path, $def));
+      $rank++;
+    }
+    return $new_routes;
+  }
+
+
+  private function apply_route_templates($route_defs, $templates) {
     if(count($route_defs) > 0 && count($templates) > 0) {
       $all_applied_route_defs = array();
 
@@ -20,21 +34,7 @@ class PlumberRouteFactory {
   }
 
 
-  public static function create_routes($definitions) {
-    $new_routes = array();
-
-    $rank = 0;
-    foreach($definitions as $path => $definition) {
-      $definition['id'] = $rank;
-      array_push($new_routes, self::create_route_object($path, $definition));
-      $rank++;
-    }
-
-    return $new_routes;
-  }
-
-
-  private static function apply_a_template($definition, $templates) {
+  private function apply_a_template($definition, $templates) {
     if(array_key_exists('route_template', $definition)) {
       if($definition['route_template'] == false) {
         // do not apply any template if route_template is defined false
@@ -87,7 +87,7 @@ class PlumberRouteFactory {
   }
 
 
-  private static function merge_cummulative_vals($def, $old_def, $key_names) {
+  private function merge_cummulative_vals($def, $old_def, $key_names) {
     $new_def = array();
     foreach($key_names as $key) {
 
@@ -108,9 +108,9 @@ class PlumberRouteFactory {
   }
 
 
-  private static function create_route_object($path, $definition) {
+  private function create_route_object($path, $definition) {
     $definition['path'] = $path;
-    return new PlumberRoute($definition);
+    return new $this->_class_to_create($definition);
   }
 
 

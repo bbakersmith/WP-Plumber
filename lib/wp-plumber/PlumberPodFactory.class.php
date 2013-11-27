@@ -1,11 +1,12 @@
 <?php
 
-class PlumberPods {
+class PlumberPodFactory extends PlumberFactory {
 
 
+  const QUERY_VAR_REGEX = '/\{([^\]]+)\}/';
 
 
-  public static function get($pod_strings, $pod_filters, $query_vars) {
+  public function create_pods($pod_strings, $pod_filters, $query_vars) {
     // pods definition syntax
     //
     // thing                  all pods of the given type
@@ -47,30 +48,51 @@ class PlumberPods {
         $filter_by = false;
       }
 
-      // get the pod data
-      $pods = static::get_pods($pod_type, $filter_by);
-
-      // check if it's a post type that supports multiple instances
-      // (not a settings pod) - and if it is, get all the 
-      // TODO possibly other types than post_type, like tags or categories
-      if($filter_by == false && self::get_object_type($pods) == 'post_type') {
-        $pods = static::get_pods($pod_type, array()); 
-      }
-
-      if(isset($pod_id_or_slug) || 
-         self::get_object_type($pods) == 'settings') {
-
-        $results = self::single_pod_fields($pods);
-      } else {
-        $results = self::multi_pod_fields($pods);
-      }
-
-      // add pods to array
-      $all_pods[$results_key] = $results;
+      // add pod(s) to array
+      $all_pods[$results_key] = new $this->_class_to_create($pod_type, $filter_by);
     }
 
     return $all_pods;
   }
+
+
+  private function get_query_var_key($string) {
+    $count = preg_match(self::QUERY_VAR_REGEX, $string, $query_var_key);
+    if($count > 0) {
+      return $query_var_key[1];
+    } else {
+      return false;
+    }
+  }
+
+
+  private function apply_nested_query_vars($target, $query_vars) {
+    $applied_items = array();
+    foreach($target as $key => $value) {
+      if(is_string($value)) {
+        $applied_items[$key] = self::apply_query_vars($value, $query_vars);
+      } else if(is_array($value)) {
+        $applied_items[$key] = self::apply_nested_query_vars($value, $query_vars);
+      } else {
+        $applied_items[$key] = $value;
+      }
+    }
+    return $applied_items;
+  }
+
+
+  private function apply_query_vars($value, $query_vars) {
+    $count = preg_match(self::QUERY_VAR_REGEX, $value, $match);
+    if($count > 0) {
+      $full_match = $match[0];
+      $query_var_key = $match[1];
+      $new_val = str_replace($full_match, $query_vars[$query_var_key], $value);
+      return $new_val;
+    }
+    return $value;
+  }
+
+
 }
 
 ?>
