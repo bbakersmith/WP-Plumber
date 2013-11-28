@@ -9,8 +9,8 @@ class PlumberRoute {
     'view_template' => false,
     'pods' => array(),
     'pod_filters' => array(),
-    'pre_render_fn' => false,
-    'post_render_fn' => false
+    'pre_render' => false,
+    'post_render' => false
   );
 
 
@@ -20,37 +20,37 @@ class PlumberRoute {
 
 
   public function get_id() {
-    return self::get_generic_attribute('id');
+    return $this->get_generic_attribute('id');
   }
 
 
   public function get_pods() {
-    return self::get_generic_attribute('pods');
+    return $this->get_generic_attribute('pods');
   }
 
 
   public function get_pod_filters() {
-    return self::get_generic_attribute('pod_filters');
+    return $this->get_generic_attribute('pod_filters');
   }
 
 
   public function get_route_vars() {
-    return self::get_generic_attribute('route_vars', array());
+    return $this->get_generic_attribute('route_vars', array());
   }
 
 
   public function get_view_template() {
-    return self::get_generic_attribute('view_template');
+    return $this->get_generic_attribute('view_template');
   }
 
 
-  public function get_pre_render_fn() {
-    return self::get_generic_attribute('pre_render_fn');
+  public function get_pre_render() {
+    return $this->get_generic_attribute('pre_render');
   }
 
 
-  public function get_post_render_fn() {
-    return self::get_generic_attribute('post_render_fn');
+  public function get_post_render() {
+    return $this->get_generic_attribute('post_render');
   }
 
 
@@ -64,21 +64,21 @@ class PlumberRoute {
 
 
   public function get_router_definition() {
-    $router_definition = self::build_standard_definition($this->definition);
+    $router_definition = $this->build_standard_definition($this->definition);
     return $router_definition;
   }
 
 
   private function build_standard_definition($plumber_definition) {
     $new_definition = array(
-      'path' => self::build_path($plumber_definition['path']),
+      'path' => $this->build_path($plumber_definition['path']),
       'page_callback' => 'Plumber::router_callback',
       'template' => false,
       'query_vars' => array(),
       'page_arguments' => array()
     );
 
-    $vars_and_args = self::build_vars_and_args($plumber_definition);
+    $vars_and_args = $this->build_vars_and_args($plumber_definition);
 
     $router_definition = array_merge($new_definition, $vars_and_args);
     return $router_definition;
@@ -106,7 +106,7 @@ class PlumberRoute {
   private function build_vars_and_args($definition) {
     $query_vars = array('plumber_route_id' => ''.$definition['id']);
     $page_arguments = array('plumber_route_id');
-    $vars_match = self::parse_vars($definition['path']);
+    $vars_match = $this->parse_vars($definition['path']);
     $vars = $vars_match[1];
 
     if(count($vars) > 0) {

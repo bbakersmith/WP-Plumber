@@ -3,7 +3,6 @@
 class Plumber {
 
   private static $plumber_route_class = 'PlumberRoute';
-  private static $plumber_route_data_class = 'PlumberRouteData';
   private static $plumber_pod_class = 'PlumberPod';
 
   private static $debug               = false;
@@ -82,22 +81,16 @@ class Plumber {
     $pre_render_args['query_vars'] = $query_and_route_vars;
 
     // TODO DRY
-    $pre_render_fn = $route->get_pre_render_fn();
-    if($pre_render_fn != false) {
-      $render_args = call_user_func($pre_render_fn, $pre_render_args);
-    } else {
-      $render_args = $pre_render_args;
-    }
+    $pre_render = $route->get_pre_render();
+    $render_args = static::user_callback($pre_render, $pre_render_args);
 
     // render view if view_template defined
     $template = $route->get_view_template();
     static::render_view_template($template, $render_args);
 
     // call post render function if it exists
-    $post_process_fn = $route->get_post_render_fn();
-    if($post_process_fn != false) {
-      call_user_func($post_process_fn, $render_args);
-    }
+    $post_render = $route->get_post_render();
+    static::user_callback($post_render, $render_args);
 
     if(self::$debug == true) {
       print '<hr /><h3>WP Plumber DEBUG</h3><hr />';
@@ -136,6 +129,15 @@ class Plumber {
       return array_combine($query_var_keys, $query_var_vals);
     }
     return array();
+  }
+
+
+  protected static function user_callback($function, $args) {
+    if($function != false) {
+      return call_user_func($function, $args);
+    } else {
+      return $args;
+    }
   }
 
 
