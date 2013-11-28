@@ -17,7 +17,7 @@ class Plumber extends PlumberSingleGlobal {
 
 
   public function __construct() {
-    $this->create_single_global_reference(self::$global_key);
+    parent::__construct(self::$global_key);
   }
 
 
@@ -148,13 +148,8 @@ class Plumber extends PlumberSingleGlobal {
   }
 
 
-  protected function call_post_render($args) {
-    $function = $route->get_post_render();
-    $this->user_callback($function, $args);
-  }
-
-
   protected function user_callback($function, $args) {
+print "WOOOOOO";
     if($function != false) {
       return call_user_func($function, $args);
     } else {
