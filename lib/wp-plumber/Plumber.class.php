@@ -1,25 +1,27 @@
 <?php
 
-class Plumber {
+class Plumber extends PlumberSingleGlobal {
 
 
   public $plumber_route_class = 'PlumberRoute';
   public $plumber_pod_class = 'PlumberPod';
 
+  protected static $global_key = 'wp_plumber';
+
   private $debug               = false;
   private $views_directory     = 'views';
-  private $view_render_fn      = ''; // TODO
+  private $view_render      = ''; // TODO
   private $route_templates     = array();
   private $route_definitions   = array();
   private $routes              = array();
 
 
-  function __construct() {
-    $GLOBALS['wp_plumber'] =& $this;
+  public function __construct() {
+    $this->create_single_global_reference(self::$global_key);
   }
 
 
-  public function debug($debug_mode=false) {
+  public function debug($debug_mode=true) {
     $this->debug = $debug_mode;
   }
 
@@ -34,8 +36,8 @@ class Plumber {
   }
 
 
-  public function set_view_render_fn($fn) {
-    $this->view_render_fn = $fn;
+  public function set_view_render($fn) {
+    $this->view_render = $fn;
   }
 
 
@@ -50,7 +52,7 @@ class Plumber {
 
 
   public static function create_routes($router) {
-    $GLOBALS['wp_plumber']->singleton_create_routes($router);
+    $GLOBALS[self::$global_key]->singleton_create_routes($router);
   }
 
 
@@ -93,10 +95,8 @@ class Plumber {
       $route->get_pod_filters(), 
       $query_and_route_vars
     );
-
     $pre_render_args['query_vars'] = $query_and_route_vars;
 
-    // TODO DRY
     $pre_render = $route->get_pre_render();
     $render_args = $this->user_callback($pre_render, $pre_render_args);
 
@@ -148,6 +148,12 @@ class Plumber {
   }
 
 
+  protected function call_post_render($args) {
+    $function = $route->get_post_render();
+    $this->user_callback($function, $args);
+  }
+
+
   protected function user_callback($function, $args) {
     if($function != false) {
       return call_user_func($function, $args);
@@ -176,7 +182,7 @@ class Plumber {
       $full_views_path = $this->get_absolute_views_directory();
       $template_path = $full_views_path.$template;
 
-      $render_fn = $this->view_render_fn;
+      $render_fn = $this->view_render;
       call_user_func($render_fn, $template_path, $render_args);
 
     }

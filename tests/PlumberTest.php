@@ -10,6 +10,23 @@ class WPRouterStub {
 }
 
 
+class UserFunctionStubs extends PlumberSingleGlobal {
+  protected static $global_key = 'wp_plumber_user_functions';
+
+  public function __construct() {
+    $this->create_single_global_reference(self::$global_key);
+  }
+
+  public static function set_mock_instance($mock) {
+    $GLOBALS[self::$global_key] = $mock;
+  }
+
+  public static function pre_render($args) {}
+  public static function render_view($template, $args) {}
+  public static function post_render($args) {}
+}
+
+
 class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
@@ -34,14 +51,14 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
                            ->method('render_view_template')
                            ->with($this->stringContains('pages/'))
                            ->will($this->returnValue(false));
- 
+
     $wp_route_definitions = array(
 
       // 0
       '^' => array(
         'view_template' => 'pages/home',
-        'pre_render' => 'fake_pre_render',
-        'post_render' => 'fake_post_render'
+        'pre_render' => 'UserFunctionStubs::pre_render',
+        'post_render' => 'UserFunctionStubs::post_render'
       ),
 
       // 1
@@ -262,16 +279,28 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     // these expectations are super fragile due to at() being based
     // on the order of _all_ method calls made on an object...?
-    $plumber_stub->staticExpects($this->at(1))
-                                 ->method('user_callback')
-                                 ->with($this->equalTo('fake_pre_render'))
-                                 ->will($this->returnValue(false));
+    // $plumber_stub->staticExpects($this->exactly(1))
+    //                              ->method('user_callback')
+    //                              ->with($this->equalTo('fake_pre_render'))
+    //                              ->will($this->returnValue(false));
 
-    $plumber_stub->staticExpects($this->at(3))
-                                 ->method('user_callback')
-                                 ->with($this->equalTo('fake_post_render'))
-                                 ->will($this->returnValue(false));
+    // $plumber_stub->staticExpects($this->exactly(2))
+    //                              ->method('user_callback')
+    //                              ->with($this->equalTo('fake_post_render'))
+    //                              ->will($this->returnValue(false));
 
+    $user_function_stubs = $this->getMock('UserFunctionStubs',
+      array('pre_render', 'render_view', 'post_render')
+    );
+    $user_function_stubs->expects($this->any())
+                                  ->method('pre_render')
+                                  ->with($this->callback(function($args) {
+                                    return $args['view_template'] == 'pages/home';
+                                  }))
+                                  ->will($this->returnValue(false));
+    UserFunctionStubs::set_mock_instance($user_function_stubs);
+
+    $plumber_stub::create_routes($wp_router_stub);
     $plumber_stub::router_callback(0);
   }
 
