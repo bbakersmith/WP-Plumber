@@ -21,20 +21,20 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
 
-    $plumber_stub = $this->getMockClass('Plumber', 
+    $plumber_stub = $this->getMock('Plumber', 
       array('get_all_pod_data', 'render_view_template', 'user_callback')
     );
 
-    $plumber_stub::staticExpects($this->any())
-          ->method('get_all_pod_data')
-          ->with($this->isType('array'))
-          ->will($this->returnValue(array()));
-
-    $plumber_stub::staticExpects($this->any())
-          ->method('render_view_template')
-          ->with($this->stringContains('pages/'))
-          ->will($this->returnValue(false));
-
+    $plumber_stub->expects($this->any())
+                           ->method('get_all_pod_data')
+                           ->with($this->isType('array'))
+                           ->will($this->returnValue(array()));
+ 
+    $plumber_stub->expects($this->any())
+                           ->method('render_view_template')
+                           ->with($this->stringContains('pages/'))
+                           ->will($this->returnValue(false));
+ 
     $wp_route_definitions = array(
 
       // 0
@@ -117,8 +117,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     );
 
 
-    $plumber_stub::set_routes($wp_route_definitions);
-    $plumber_stub::set_route_templates($wp_route_templates);
+    $plumber_stub->set_routes($wp_route_definitions);
+    $plumber_stub->set_route_templates($wp_route_templates);
 
     $user_functions_stub_class = $this->getMockClass('UserFunctionsStub',
       array('pre_render', 'render_view', 'post_render')
@@ -171,7 +171,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
                  }))
           ->will($this->returnValue(null));
 
-    $plumber_stub::create_routes($wp_router_stub);
+    $plumber_stub->create_routes($wp_router_stub);
   }
 
 
@@ -262,12 +262,12 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     // these expectations are super fragile due to at() being based
     // on the order of _all_ method calls made on an object...?
-    $plumber_stub::staticExpects($this->at(1))
+    $plumber_stub->staticExpects($this->at(1))
                                  ->method('user_callback')
                                  ->with($this->equalTo('fake_pre_render'))
                                  ->will($this->returnValue(false));
 
-    $plumber_stub::staticExpects($this->at(3))
+    $plumber_stub->staticExpects($this->at(3))
                                  ->method('user_callback')
                                  ->with($this->equalTo('fake_post_render'))
                                  ->will($this->returnValue(false));

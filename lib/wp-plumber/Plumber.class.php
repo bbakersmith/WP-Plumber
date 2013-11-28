@@ -2,55 +2,66 @@
 
 class Plumber {
 
-  private static $plumber_route_class = 'PlumberRoute';
-  private static $plumber_pod_class = 'PlumberPod';
 
-  private static $debug               = false;
-  private static $views_directory     = 'views';
-  private static $view_render_fn      = ''; // TODO
-  private static $route_templates     = array();
-  private static $route_definitions   = array();
-  private static $routes              = array();
+  public $plumber_route_class = 'PlumberRoute';
+  public $plumber_pod_class = 'PlumberPod';
+
+  private $debug               = false;
+  private $views_directory     = 'views';
+  private $view_render_fn      = ''; // TODO
+  private $route_templates     = array();
+  private $route_definitions   = array();
+  private $routes              = array();
 
 
-  public static function debug($debug_mode=false) {
-    self::$debug = $debug_mode;
+  function __construct() {
+    $GLOBALS['wp_plumber'] =& $this;
   }
 
 
-  public static function set_views_directory($dirname) {
-    self::$views_directory = $dirname;
+  public function debug($debug_mode=false) {
+    $this->debug = $debug_mode;
   }
 
 
-  public static function get_views_directory() {
-    return self::$views_directory;
+  public function set_views_directory($dirname) {
+    $this->views_directory = $dirname;
   }
 
 
-  public static function set_view_render_fn($fn) {
-    self::$view_render_fn = $fn;
+  public function get_views_directory() {
+    return $this->views_directory;
   }
 
 
-  public static function set_routes($definitions) {
-    self::$route_definitions = $definitions;
+  public function set_view_render_fn($fn) {
+    $this->view_render_fn = $fn;
   }
 
 
-  public static function set_route_templates($templates) {
-    self::$route_templates = $templates;
+  public function set_routes($definitions) {
+    $this->route_definitions = $definitions;
+  }
+
+
+  public function set_route_templates($templates) {
+    $this->route_templates = $templates;
   }
 
 
   public static function create_routes($router) {
-    self::$routes = static::create_routes_with_factory(
-      self::$route_definitions,
-      self::$route_templates
+    $GLOBALS['wp_plumber']->singleton_create_routes($router);
+  }
+
+
+  public function singleton_create_routes($router) {
+    $this->routes = $this->create_routes_with_factory(
+      $this->route_definitions,
+      $this->route_templates
     );
 
-    $all_routes = self::$routes;
-    $wp_router_definitions = static::get_wp_router_definitions($all_routes);
+    $all_routes = $this->routes;
+    $wp_router_definitions = $this->get_wp_router_definitions($all_routes);
     foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
     }
@@ -58,21 +69,26 @@ class Plumber {
 
 
   public static function router_callback() {
-    // first callback arg is id, the rest are query_vars
+    // reference the singleton created when plugin is loaded
     $args = func_get_args();
+    $GLOBALS['wp_plumber']->singleton_router_callback($args);
+  }
 
+
+  public function singleton_router_callback($args) {
+    // first callback arg is id, the rest are query_vars
     $id = $args[0];
-    $route = self::$routes[$id];
+    $route = $this->routes[$id];
 
     $router_def = $route->get_router_definition();
     $page_arg_keys = $router_def['page_arguments'];
-    $query_vars = static::get_query_vars($page_arg_keys, $args);
+    $query_vars = $this->get_query_vars($page_arg_keys, $args);
 
     $route_vars = $route->get_route_vars();
     $query_and_route_vars = array_merge($query_vars, $route_vars);
 
     // parse and process pods
-    $pre_render_args = static::get_all_pod_data(
+    $pre_render_args = $this->get_all_pod_data(
       $route->get_pods(),
       $route->get_pod_filters(), 
       $query_and_route_vars
@@ -82,17 +98,17 @@ class Plumber {
 
     // TODO DRY
     $pre_render = $route->get_pre_render();
-    $render_args = static::user_callback($pre_render, $pre_render_args);
+    $render_args = $this->user_callback($pre_render, $pre_render_args);
 
     // render view if view_template defined
     $template = $route->get_view_template();
-    static::render_view_template($template, $render_args);
+    $this->render_view_template($template, $render_args);
 
     // call post render function if it exists
     $post_render = $route->get_post_render();
-    static::user_callback($post_render, $render_args);
+    $this->user_callback($post_render, $render_args);
 
-    if(self::$debug == true) {
+    if($this->debug == true) {
       print '<hr /><h3>WP Plumber DEBUG</h3><hr />';
       print '<h5>$route</h5><hr />';
       var_dump($route);
@@ -108,21 +124,21 @@ class Plumber {
   }
 
 
-  protected static function create_routes_with_factory($defs, $templates) {
-    $factory = new PlumberRouteFactory(self::$plumber_route_class);
+  protected function create_routes_with_factory($defs, $templates) {
+    $factory = new PlumberRouteFactory($this->plumber_route_class);
     $routes = $factory->create_routes($defs, $templates);
     return $routes;
   }
 
 
-  protected static function get_all_pod_data($pods, $filters, $route_vars) {
-    $factory = new PlumberPodFactory(self::$plumber_pod_class);
+  protected function get_all_pod_data($pods, $filters, $route_vars) {
+    $factory = new PlumberPodFactory($this->plumber_pod_class);
     $pods = $factory->create_pods($pods, $filters, $route_vars);
     return $pods;
   }
 
 
-  private static function get_query_vars($page_arg_keys, $page_arg_vals) {
+  private function get_query_vars($page_arg_keys, $page_arg_vals) {
     if(count($page_arg_keys) > 1) {
       $query_var_keys = array_slice($page_arg_keys, 1);
       $query_var_vals = array_slice($page_arg_vals, 1);
@@ -132,7 +148,7 @@ class Plumber {
   }
 
 
-  protected static function user_callback($function, $args) {
+  protected function user_callback($function, $args) {
     if($function != false) {
       return call_user_func($function, $args);
     } else {
@@ -141,7 +157,7 @@ class Plumber {
   }
 
 
-  protected static function get_wp_router_definitions($all_routes) {
+  protected function get_wp_router_definitions($all_routes) {
     $all_definitions = array();
 
     if(count($all_routes) > 0) {
@@ -154,22 +170,22 @@ class Plumber {
   }
 
 
-  protected static function render_view_template($template, $render_args) {
+  protected function render_view_template($template, $render_args) {
     if($template != false) {
 
-      $full_views_path = static::get_absolute_views_directory();
+      $full_views_path = $this->get_absolute_views_directory();
       $template_path = $full_views_path.$template;
 
-      $render_fn = self::$view_render_fn;
+      $render_fn = $this->view_render_fn;
       call_user_func($render_fn, $template_path, $render_args);
 
     }
   }
 
 
-  protected static function get_absolute_views_directory() {
+  protected function get_absolute_views_directory() {
     $theme_dir = get_stylesheet_directory();
-    $template_dir = self::$views_directory;
+    $template_dir = $this->views_directory;
     return $theme_dir.'/'.$template_dir.'/';
   }
 

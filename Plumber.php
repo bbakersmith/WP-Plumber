@@ -21,6 +21,7 @@ require_once($plumber_plugin_directory.'/PlumberPodFactory.class.php');
 // allow tests to run without loading wordpress
 if(defined('WP_PLUMBER_TEST') == false || WP_PLUMBER_TEST == false) {
   add_action('wp_router_generate_routes', 'Plumber::create_routes', 20);
+  $wp_plumber = new Plumber;
 }
 
 ?>
