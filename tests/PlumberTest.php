@@ -31,7 +31,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
 
     $plumber_stub = $this->getMock('Plumber', 
-      array('get_all_pod_data', 'render_view_template', 'user_callback')
+      array('get_all_pod_data', 'render_view_template')
     );
 
     $plumber_stub->expects($this->any())
@@ -49,6 +49,9 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       // 0
       '^' => array(
         'view_template' => 'pages/home',
+        'route_vars' => array(
+          'test_var' => 'test_value'
+        ),
         'pre_render' => 'UserFunctionStubs::pre_render',
         'post_render' => 'UserFunctionStubs::post_render'
       ),
@@ -285,28 +288,87 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   public function testPreAndPostRender() {
     global $wp_router_stub, $plumber_stub;
 
+    $user_function_stubs = $this->getMock('UserFunctionStubs',
+      array('pre_render', 'render_view', 'post_render')
+    );
+
+    $user_function_stubs->expects($this->exactly(1))
+                                  ->method('pre_render')
+                                  ->with($this->equalTo(
+                                    // not sure why args are nested in
+                                    // another array. this is only happening
+                                    // in the mocked version of function.
+                                    array(array(
+                                      'route_vars' => array(
+                                        'test_var' => 'test_value'
+                                      )
+                                    ))
+                                  ))
+                                  ->will($this->returnValue(false));
+
+    $user_function_stubs->expects($this->exactly(1))
+                                  ->method('post_render')
+                                  ->with($this->equalTo(
+                                    // not sure why args are nested in
+                                    // another array. this is only happening
+                                    // in the mocked version of function.
+                                    array(array(
+                                      'route_vars' => array(
+                                        'test_var' => 'test_value'
+                                      )
+                                    ))
+                                  ))
+                                  ->will($this->returnValue(false));
+
+    $GLOBALS['wp_plumber_user_functions'] = $user_function_stubs;
+
+    Plumber::create_routes($wp_router_stub);
+    Plumber::router_callback(0);
+  }
+
+
+  public function testPreAndPostRenderWithArgModification() {
+    global $wp_router_stub, $plumber_stub;
 
     $user_function_stubs = $this->getMock('UserFunctionStubs',
       array('pre_render', 'render_view', 'post_render')
     );
 
-    $user_function_stubs->expects($this->atLeastOnce())
+    $user_function_stubs->expects($this->exactly(1))
                                   ->method('pre_render')
-                                  ->with($this->callback(function($args) {
-                                    return $args == 'pages/home';
-                                  }))
+                                  ->with($this->equalTo(
+                                    // not sure why args are nested in
+                                    // another array. this is only happening
+                                    // in the mocked version of function.
+                                    array(array(
+                                      'route_vars' => array(
+                                        'test_var' => 'test_value'
+                                      )
+                                    ))
+                                  ))
+                                  ->will($this->returnValue(
+                                    array(
+                                      'route_vars' => array(
+                                        'test_var' => 'new_value'
+                                      )
+                                    )
+                                  ));
+
+    $user_function_stubs->expects($this->exactly(1))
+                                  ->method('post_render')
+                                  ->with($this->equalTo(
+                                    // not sure why args are nested in
+                                    // another array. this is only happening
+                                    // in the mocked version of function.
+                                    array(array(
+                                      'route_vars' => array(
+                                        'test_var' => 'new_value'
+                                      )
+                                    ))
+                                  ))
                                   ->will($this->returnValue(false));
 
-    // $user_function_stubs->expects($this->atLeastOnce())
-    //                               ->method('post_render')
-    //                               ->with($this->callback(function($args) {
-    //                                 return $args['view_template'] == 'pages/home';
-    //                               }))
-    //                               ->will($this->returnValue(false));
-
     $GLOBALS['wp_plumber_user_functions'] = $user_function_stubs;
-
-    UserFunctionStubs::pre_render(array());
 
     Plumber::create_routes($wp_router_stub);
     Plumber::router_callback(0);

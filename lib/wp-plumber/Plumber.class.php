@@ -95,7 +95,7 @@ class Plumber extends PlumberSingleGlobal {
       $route->get_pod_filters(), 
       $query_and_route_vars
     );
-    $pre_render_args['query_vars'] = $query_and_route_vars;
+    $pre_render_args['route_vars'] = $query_and_route_vars;
 
     $pre_render = $route->get_pre_render();
     $render_args = $this->user_callback($pre_render, $pre_render_args);
@@ -149,9 +149,13 @@ class Plumber extends PlumberSingleGlobal {
 
 
   protected function user_callback($function, $args) {
-print "WOOOOOO";
+    $response = false;
     if($function != false) {
-      return call_user_func($function, $args);
+      $response = call_user_func($function, $args);
+    }
+
+    if($response != false && is_array($response)) {
+      return $response;
     } else {
       return $args;
     }
