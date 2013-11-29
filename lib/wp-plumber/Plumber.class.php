@@ -3,14 +3,14 @@
 class Plumber extends PlumberSingleGlobal {
 
 
-  public $plumber_route_class = 'PlumberRoute';
-  public $plumber_pod_class = 'PlumberPod';
+  public $plumber_route_class  = 'PlumberRoute';
+  public $plumber_pod_class    = 'PlumberPod';
 
   protected static $global_key = 'wp_plumber';
 
   private $debug               = false;
   private $views_directory     = 'views';
-  private $view_render      = ''; // TODO
+  private $view_render         = ''; // TODO
   private $route_templates     = array();
   private $route_definitions   = array();
   private $routes              = array();
@@ -73,7 +73,7 @@ class Plumber extends PlumberSingleGlobal {
   public static function router_callback() {
     // reference the singleton created when plugin is loaded
     $args = func_get_args();
-    $GLOBALS['wp_plumber']->singleton_router_callback($args);
+    $GLOBALS[self::$global_key]->singleton_router_callback($args);
   }
 
 
