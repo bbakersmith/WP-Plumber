@@ -31,18 +31,13 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
 
     $plumber_stub = $this->getMock('Plumber', 
-      array('get_all_pod_data', 'render_view_template')
+      array('get_all_pod_data', 'get_absolute_views_directory')
     );
-
-    $plumber_stub->expects($this->any())
-                           ->method('get_all_pod_data')
-                           ->with($this->isType('array'))
-                           ->will($this->returnValue(array()));
  
     $plumber_stub->expects($this->any())
-                           ->method('render_view_template')
-                           ->with($this->stringContains('pages/'))
-                           ->will($this->returnValue(false));
+      ->method('render_view_template')
+      ->will($this->returnValue(dirname(__FILE__).'/views/')
+    );
 
     $wp_route_definitions = array(
 
@@ -138,7 +133,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
   public function get_user_function_stubs() {
     $user_function_stubs = $this->getMock('UserFunctionStubs',
-      array('pre_render', 'render_view', 'post_render')
+      array('pre_render', 'view_render', 'post_render')
     );
     return $user_function_stubs;
   }
@@ -193,17 +188,17 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // test dynamic route vars for proper path formation and argument
     // assignment
     $wp_router_stub->expects($this->at(3))
-          ->method('add_route')
-          ->with($this->equalTo('^articles/(.*)$'),
-                 $this->callback(function($def) {
-                   return $def['query_vars']['plumber_route_id'] == 3 &&
-                          $def['query_vars']['page'] == 1 &&
-                          $def['page_arguments'] == array(
-                            'plumber_route_id',
-                            'page'
-                          );
-                 }))
-          ->will($this->returnValue(null));
+      ->method('add_route')
+      ->with($this->equalTo('^articles/(.*)$'),
+             $this->callback(function($def) {
+               return $def['query_vars']['plumber_route_id'] == 3 &&
+                      $def['query_vars']['page'] == 1 &&
+                      $def['page_arguments'] == array(
+                        'plumber_route_id',
+                        'page'
+                      );
+             }))
+      ->will($this->returnValue(null));
 
     $plumber_stub->create_routes($wp_router_stub);
   }
@@ -289,38 +284,45 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   }
 
 
-  public function testPreAndPostRender() {
+  public function testPreAndViewAndPostRenderArgs() {
     global $wp_router_stub, $plumber_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
 
     $local_function_stubs->expects($this->exactly(1))
-                                  ->method('pre_render')
-                                  ->with($this->equalTo(
-                                    // not sure why args are nested in
-                                    // another array. this is only happening
-                                    // in the mocked version of function.
-                                    array(array(
-                                      'route_vars' => array(
-                                        'test_var' => 'test_value'
-                                      )
-                                    ))
-                                  ))
-                                  ->will($this->returnValue(false));
+      ->method('pre_render')
+      ->with($this->equalTo(
+        array(
+          'route_vars' => array(
+            'test_var' => 'test_value'
+          )
+        )
+      ))
+      ->will($this->returnValue(false)
+    );
 
     $local_function_stubs->expects($this->exactly(1))
-                                  ->method('post_render')
-                                  ->with($this->equalTo(
-                                    // not sure why args are nested in
-                                    // another array. this is only happening
-                                    // in the mocked version of function.
-                                    array(array(
-                                      'route_vars' => array(
-                                        'test_var' => 'test_value'
-                                      )
-                                    ))
-                                  ))
-                                  ->will($this->returnValue(false));
+      ->method('view_render')
+      ->with($this->equalTo('pages/home'),
+        $this->equalTo(array(
+          'route_vars' => array(
+            'test_var' => 'test_value'
+          )
+        ))
+      )
+      ->will($this->returnValue(false));
+
+    $local_function_stubs->expects($this->exactly(1))
+      ->method('post_render')
+      ->with($this->equalTo(
+        array(
+          'route_vars' => array(
+            'test_var' => 'test_value'
+          )
+        )
+      ))
+      ->will($this->returnValue(false)
+    );
 
     $GLOBALS['wp_plumber_user_functions'] = $local_function_stubs;
 
@@ -329,44 +331,49 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   }
 
 
-  public function testPreAndPostRenderWithArgModification() {
+  public function testPreAndViewAndPostRenderArgsWithModification() {
     global $wp_router_stub, $plumber_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
 
     $local_function_stubs->expects($this->exactly(1))
-                                  ->method('pre_render')
-                                  ->with($this->equalTo(
-                                    // not sure why args are nested in
-                                    // another array. this is only happening
-                                    // in the mocked version of function.
-                                    array(array(
-                                      'route_vars' => array(
-                                        'test_var' => 'test_value'
-                                      )
-                                    ))
-                                  ))
-                                  ->will($this->returnValue(
-                                    array(
-                                      'route_vars' => array(
-                                        'test_var' => 'new_value'
-                                      )
-                                    )
-                                  ));
+      ->method('pre_render')
+      ->with($this->equalTo(
+        array(
+          'route_vars' => array(
+            'test_var' => 'test_value'
+          )
+        )
+      ))
+      ->will($this->returnValue(
+        array(
+          'route_vars' => array(
+            'test_var' => 'new_value'
+          )
+        )
+      ));
 
     $local_function_stubs->expects($this->exactly(1))
-                                  ->method('post_render')
-                                  ->with($this->equalTo(
-                                    // not sure why args are nested in
-                                    // another array. this is only happening
-                                    // in the mocked version of function.
-                                    array(array(
-                                      'route_vars' => array(
-                                        'test_var' => 'new_value'
-                                      )
-                                    ))
-                                  ))
-                                  ->will($this->returnValue(false));
+      ->method('view_render')
+      ->with($this->equalTo('pages/home'),
+        $this->equalTo(array(
+          'route_vars' => array(
+            'test_var' => 'new_value'
+          )
+        ))
+      )
+      ->will($this->returnValue(false));
+
+    $local_function_stubs->expects($this->exactly(1))
+      ->method('post_render')
+      ->with($this->equalTo(
+        array(
+          'route_vars' => array(
+            'test_var' => 'new_value'
+          )
+        )
+      ))
+      ->will($this->returnValue(false));
 
     $GLOBALS['wp_plumber_user_functions'] = $local_function_stubs;
 
@@ -380,15 +387,13 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // and content
     global $wp_router_stub, $plumber_stub;
 
-    $u_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs = $this->get_user_function_stubs();
 
-    $u_function_stubs->expects($this->exactly(4))
+    $local_function_stubs->expects($this->atLeastOnce())
       ->method('view_render')
       ->with(
        $this->equalTo('pages/articlesm'),
        $this->callback(function($args) {
-print("WWW");
-print_r($args);
            $real_args = $args[0];
            $page = $real_args['route_vars']['page'];
            $other = $real_args['route_vars']['something'];
@@ -399,10 +404,10 @@ print_r($args);
 
     Plumber::create_routes($wp_router_stub);
 
-    $GLOBALS['wp_plumber_user_functions'] = $u_function_stubs;
+    $GLOBALS['wp_plumber_user_functions'] = $local_function_stubs;
 
     // id, page
-    Plumber::router_callback(0, 2);
+    Plumber::router_callback(3, 2);
   }
 
 

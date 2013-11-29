@@ -32,7 +32,7 @@ class PlumberSingleGlobal {
     $active_instance = self::get_single_global();
 
     // call the given method on that instance
-    return $active_instance->$method($args);
+    return call_user_func_array(array($active_instance, $method), $args);
   }
 
 
