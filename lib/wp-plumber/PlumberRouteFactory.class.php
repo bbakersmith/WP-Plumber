@@ -4,8 +4,7 @@ class PlumberRouteFactory extends PlumberFactory {
 
 
   public function create_routes($definitions, $templates=array()) {
-    $applied_defs = self::apply_route_templates($definitions, $templates);
-
+    $applied_defs = $this->apply_route_templates($definitions, $templates);
     $new_routes = array();
     $rank = 0;
     foreach($applied_defs as $path => $def) {
@@ -18,6 +17,10 @@ class PlumberRouteFactory extends PlumberFactory {
 
 
   private function apply_route_templates($route_defs, $templates) {
+// print "defs: ";
+// var_dump($route_defs);
+// print "templates: ";
+// var_dump($templates);
     if(count($route_defs) > 0 && count($templates) > 0) {
       $all_applied_route_defs = array();
 

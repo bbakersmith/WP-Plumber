@@ -10,12 +10,38 @@ class WPRouterStub {
 }
 
 
-class UserFunctionStubs extends PlumberSingleGlobal {
-  protected static $global_key = 'wp_plumber_user_functions';
+class UserFunctionStubs {
+  protected static $_active_instance;
 
   public function __construct() {
-    parent::__construct(self::$global_key);
+    static::$_active_instance = $this;
   }
+
+  public static function set_active_instance($instance) {
+    self::$_active_instance = $instance;
+    return $instance;
+  }
+
+  public static function get_active_instance() {
+    return self::$_active_instance;
+  }
+
+  public static function pre_render($args) {
+    // pre_render must return a value in order to modify args
+    return self::$_active_instance->singleton_pre_render($args);
+  }
+  public function singleton_pre_render($args) {print "pre_render($args) called...";}
+
+  public static function view_render($template, $args) {
+    self::$_active_instance->singleton_view_render($template, $args);
+  }
+  public function singleton_view_render($template, $args) {print "view_render($args) called...";}
+
+  public static function post_render($args) {
+    self::$_active_instance->singleton_post_render($args);
+  }
+  public function singleton_post_render($args) {print "post_render($args) called...";}
+
 }
 
 
@@ -30,7 +56,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
 
-    $plumber_stub = $this->getMock('Plumber', 
+    $plumber_stub = $this->getMock('PlumberInstance', 
       array('get_all_pod_data', 'get_absolute_views_directory')
     );
  
@@ -38,6 +64,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->method('render_view_template')
       ->will($this->returnValue(dirname(__FILE__).'/views/')
     );
+
+    Plumber::set_active_instance($plumber_stub);
 
     $wp_route_definitions = array(
 
@@ -100,7 +128,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     );
 
 
-    $set_route_templates = array(
+    $wp_route_templates = array(
 
       'default' => array(
         'pods' => array('settings:demo_site_settings')
@@ -125,15 +153,19 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     );
 
 
-    $plumber_stub->set_routes($wp_route_definitions);
-    $plumber_stub->set_route_templates($wp_route_templates);
-    $plumber_stub->set_view_render('UserFunctionStubs::view_render');
+    Plumber::set_routes($wp_route_definitions);
+    Plumber::set_route_templates($wp_route_templates);
+    Plumber::set_view_render('UserFunctionStubs::view_render');
   }
 
 
   public function get_user_function_stubs() {
     $user_function_stubs = $this->getMock('UserFunctionStubs',
-      array('pre_render', 'view_render', 'post_render')
+      array(
+        'singleton_pre_render', 
+        'singleton_view_render', 
+        'singleton_post_render'
+      )
     );
     return $user_function_stubs;
   }
@@ -144,7 +176,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
   public function testPlumberSingleGlobalIsCreated() {
     global $plumber_stub;
-    $this->assertEquals($GLOBALS['wp_plumber'], $plumber_stub);
+    $this->assertEquals(Plumber::get_active_instance(), $plumber_stub);
   }
 
 
@@ -152,7 +184,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $user_function_stubs = $this->get_user_function_stubs();
 
     $this->assertEquals(
-      $GLOBALS['wp_plumber_user_functions'], 
+      UserFunctionStubs::get_active_instance(),
       $user_function_stubs
     );
   }
@@ -161,7 +193,6 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   public function testWPRouterDefinitions() {
     // ensure that proper route definitions are being passed
     // to WP Router
-    global $plumber_stub;
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
 
     // bare minimum homepage test
@@ -200,7 +231,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
              }))
       ->will($this->returnValue(null));
 
-    $plumber_stub->create_routes($wp_router_stub);
+    Plumber::create_routes($wp_router_stub);
   }
 
 
@@ -285,12 +316,12 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   public function testPreAndViewAndPostRenderArgs() {
-    global $wp_router_stub, $plumber_stub;
+    global $wp_router_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
 
     $local_function_stubs->expects($this->exactly(1))
-      ->method('pre_render')
+      ->method('singleton_pre_render')
       ->with($this->equalTo(
         array(
           'route_vars' => array(
@@ -302,7 +333,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     );
 
     $local_function_stubs->expects($this->exactly(1))
-      ->method('view_render')
+      ->method('singleton_view_render')
       ->with($this->equalTo('pages/home'),
         $this->equalTo(array(
           'route_vars' => array(
@@ -313,7 +344,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->will($this->returnValue(false));
 
     $local_function_stubs->expects($this->exactly(1))
-      ->method('post_render')
+      ->method('singleton_post_render')
       ->with($this->equalTo(
         array(
           'route_vars' => array(
@@ -324,7 +355,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->will($this->returnValue(false)
     );
 
-    $GLOBALS['wp_plumber_user_functions'] = $local_function_stubs;
+    UserFunctionStubs::set_active_instance($local_function_stubs);
 
     Plumber::create_routes($wp_router_stub);
     Plumber::router_callback(0);
@@ -332,12 +363,12 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   public function testPreAndViewAndPostRenderArgsWithModification() {
-    global $wp_router_stub, $plumber_stub;
+    global $wp_router_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
 
     $local_function_stubs->expects($this->exactly(1))
-      ->method('pre_render')
+      ->method('singleton_pre_render')
       ->with($this->equalTo(
         array(
           'route_vars' => array(
@@ -354,7 +385,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ));
 
     $local_function_stubs->expects($this->exactly(1))
-      ->method('view_render')
+      ->method('singleton_view_render')
       ->with($this->equalTo('pages/home'),
         $this->equalTo(array(
           'route_vars' => array(
@@ -365,7 +396,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->will($this->returnValue(false));
 
     $local_function_stubs->expects($this->exactly(1))
-      ->method('post_render')
+      ->method('singleton_post_render')
       ->with($this->equalTo(
         array(
           'route_vars' => array(
@@ -375,7 +406,10 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ))
       ->will($this->returnValue(false));
 
-    $GLOBALS['wp_plumber_user_functions'] = $local_function_stubs;
+// print "ACTIVE: ";
+// var_dump($local_function_stubs);
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
 
     Plumber::create_routes($wp_router_stub);
     Plumber::router_callback(0);
@@ -385,26 +419,25 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   public function testViewRenderData() {
     // check that data being passed to the views is correct in structure
     // and content
-    global $wp_router_stub, $plumber_stub;
+    global $wp_router_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
 
-    $local_function_stubs->expects($this->atLeastOnce())
-      ->method('view_render')
+    $local_function_stubs->expects($this->once())
+      ->method('singleton_view_render')
       ->with(
-       $this->equalTo('pages/articlesm'),
+       $this->equalTo('pages/articles'),
        $this->callback(function($args) {
-           $real_args = $args[0];
-           $page = $real_args['route_vars']['page'];
-           $other = $real_args['route_vars']['something'];
-           return $page == 2 && $other == 'elsef';
+           $page = $args['route_vars']['page'];
+           $other = $args['route_vars']['something'];
+           return $page == 2 && $other == 'else';
          })
        )
        ->will($this->returnValue(false));
 
     Plumber::create_routes($wp_router_stub);
 
-    $GLOBALS['wp_plumber_user_functions'] = $local_function_stubs;
+    UserFunctionStubs::set_active_instance($local_function_stubs);
 
     // id, page
     Plumber::router_callback(3, 2);
@@ -414,7 +447,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   public function testGettingPodData() {
     // check that pod objects are receiving the correct pod definitions and
     // filters
-    global $wp_router_stub, $plumber_stub;
+    global $wp_router_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
   }

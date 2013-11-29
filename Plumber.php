@@ -11,7 +11,7 @@
  */
 
 $plumber_plugin_directory = dirname(__FILE__).'/lib/wp-plumber/';
-require_once($plumber_plugin_directory.'/PlumberSingleGlobal.class.php');
+require_once($plumber_plugin_directory.'/PlumberInstance.class.php');
 require_once($plumber_plugin_directory.'/Plumber.class.php');
 require_once($plumber_plugin_directory.'/PlumberFactory.class.php');
 require_once($plumber_plugin_directory.'/PlumberRoute.class.php');
