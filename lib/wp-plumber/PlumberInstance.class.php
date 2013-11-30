@@ -14,8 +14,8 @@ class PlumberInstance {
   private $routes              = array();
 
 
-  public static function debug($debug_mode=true) {
-    static::get_active_instance()->debug = $debug_mode;
+  public function debug($debug_mode=true) {
+    $this->debug = $debug_mode;
   }
 
 
