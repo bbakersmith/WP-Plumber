@@ -59,13 +59,6 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $plumber_stub = $this->getMock('PlumberInstance', 
       array('get_absolute_views_directory')
     );
-
-    $pod_factory_stub = $this->getMockBuilder('PlumberPodFactory')
-      ->setMethods(array('create_pods'))
-      ->disableOriginalConstructor()
-      ->getMock();
-
-    $plumber_stub->plumber_pod_factory = $pod_factory_stub;
  
     $plumber_stub->expects($this->any())
       ->method('render_view_template')
@@ -413,9 +406,6 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ))
       ->will($this->returnValue(false));
 
-// print "ACTIVE: ";
-// var_dump($local_function_stubs);
-
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
     Plumber::create_routes($wp_router_stub);
@@ -428,8 +418,14 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // and content
     global $wp_router_stub;
 
-    $local_function_stubs = $this->get_user_function_stubs();
+    $pod_factory_stub = $this->getMockBuilder('PlumberPodFactory')
+      ->setMethods(array('create_single_pod'))
+      ->disableOriginalConstructor()
+      ->getMock(); 
+    $plumber = Plumber::get_active_instance();
+    $plumber->plumber_pod_factory = $pod_factory_stub;
 
+    $local_function_stubs = $this->get_user_function_stubs();
     $local_function_stubs->expects($this->once())
       ->method('singleton_view_render')
       ->with(
@@ -441,6 +437,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
         })
       )
       ->will($this->returnValue(false));
+
+    Plumber::set_active_instance($plumber);
 
     Plumber::create_routes($wp_router_stub);
 
@@ -458,20 +456,12 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $plumber = Plumber::get_active_instance();
 
-    // BEGIN PROBLEMS //
+    $local_pod_stub_class = $this->getMockClass('PlumberPod',
+      array('get_data')
+    );
 
-    // the issue is whether expectations can be set up on a class
-    // for its instances, or if the damned factory class has to be
-    // mocked in order to return the proper objects...
-
-    $local_pod_stub = $this->getMockBuilder('PlumberPod')
-      ->setMockClassName('MockPlumberPod')
-      ->setMethods(array('get_pod_data'))
-      ->disableOriginalConstructor()
-      ->getMock();
-
-    $local_pod_stub->expects($this->once())
-      ->method('get_pod_data')
+    $local_pod_stub_class::staticExpects($this->exactly(1))
+      ->method('get_data')
       ->with(
         $this->equalTo('article'),
         $this->equalTo('a-test-slug')
@@ -483,22 +473,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
         )
       ));
 
-    $local_pod_factory_stub = $this->getMockBuilder('PlumberPodFactory')
-      ->setMethods(array('create_single_pod'))
-      ->disableOriginalConstructor()
-      ->getMock();
-
-    $local_pod_factory_stub->expects($this->exactly(1))
-      ->method('create_single_pod')
-      ->with(
-        $this->equalTo('article'),
-        $this->equalTo('a-test-slug')
-      )
-      ->will($this->returnValue($local_pod_stub));
-
-    $plumber->plumber_pod_factory = $local_pod_factory_stub;
-
-    // END PROBLEMS //
+    $plumber->plumber_pod_class = $local_pod_stub_class;
 
     $local_function_stubs = $this->get_user_function_stubs();
     $local_function_stubs->expects($this->once())
@@ -506,8 +481,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->with(
         $this->equalTo('pages/articles/single'),
         $this->callback(function($args) {
-          return array_key_exists('content', $args) &&
-                 array_key_exists('pod_test_title', $args['content']) &&
+          return isset($args['content']) &&
+                 isset($args['content']['pod_test_title']) &&
                  $args['content']['pod_test_title'] == 'A Test Title' && 
                  $args['content']['pod_test_url'] == 'http://test.com';
         }))

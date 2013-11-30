@@ -3,53 +3,27 @@
 class PlumberPod extends ArrayObject {
 
 
-  protected $_pod_data = array();
-
-
-  function __construct($pod_type, $filters=false) {
-    $this->_pod_data = $this->get_pod_data($pod_type, $filters);
-  }
-
-
-  public function offsetExists($index) {
-    return array_key_exists($index, $this->_pod_data);
-  }
-
-
-  public function offsetGet($index) {
-    if($this->offsetExists($index)) {
-      return $this->_pod_data[$index];
-    } else {
-      return '';
-    }
-  }
-
-
-  public function offsetSet($index, $value) {
-    // no setting allowed
-  }
-
-
-  public function offsetUnset($index) {
-    // no unsetting allowed
+  public static function get_data($pod_type, $filters=false) {
+    $pod = new self();
+    return $pod->get_pod_data($pod_type, $filters);
   }
 
 
   private function get_pod_data($pod_type, $filters) {
     // get the pod data
-    $pods = static::retrieve_pods($pod_type, $filters);
+    $pods = $this->retrieve_pods($pod_type, $filters);
 
     // check if it's a post type that supports multiple instances
     // (not a settings pod) - and if it is, get all the 
     // TODO possibly other types than post_type, like tags or categories
-    if($filters == false && self::get_object_type($pods) == 'post_type') {
-      $pods = static::retrieve_pods($pod_type, array()); 
+    if($filters == false && $this->get_object_type($pods) == 'post_type') {
+      $pods = $this->retrieve_pods($pod_type, array()); 
     }
 
     if(is_string($filters) || self::get_object_type($pods) == 'settings') {
-      $results = self::single_pod_fields($pods);
+      $results = $this->single_pod_fields($pods);
     } else {
-      $results = self::multi_pod_fields($pods);
+      $results = $this->multi_pod_fields($pods);
     }
 
     return $results;

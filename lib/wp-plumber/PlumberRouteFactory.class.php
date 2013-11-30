@@ -1,6 +1,15 @@
 <?php
 
-class PlumberRouteFactory extends PlumberFactory {
+class PlumberRouteFactory {
+
+
+  protected $_class_to_create;
+
+  
+  function __construct($class) {
+    // assign the class that is to be created by this factory
+    $this->_class_to_create = $class;
+  }  
 
 
   public function create_routes($definitions, $templates=array()) {

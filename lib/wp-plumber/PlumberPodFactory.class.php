@@ -1,9 +1,17 @@
 <?php
 
-class PlumberPodFactory extends PlumberFactory {
+class PlumberPodFactory {
 
 
   const QUERY_VAR_REGEX = '/\{([^\]]+)\}/';
+
+  protected $_class_to_create;
+
+  
+  function __construct($class) {
+    // assign the class that is to be created by this factory
+    $this->_class_to_create = $class;
+  }  
 
 
   public function create_pods($pod_strings, $pod_filters, $query_vars) {
@@ -49,7 +57,7 @@ class PlumberPodFactory extends PlumberFactory {
       }
 
       // add pod(s) to array
-      $all_pods[$results_key] = $this->create_single_pod($pod_type, $filter_by);
+      $all_pods[$results_key] = (array) $this->create_single_pod($pod_type, $filter_by);
     }
 
     return $all_pods;
@@ -57,7 +65,8 @@ class PlumberPodFactory extends PlumberFactory {
 
 
   protected function create_single_pod($pod_type, $filter_by) {
-    return new $this->_class_to_create($pod_type, $filter_by);
+    $class = $this->_class_to_create;
+    return $class::get_data($pod_type, $filter_by);
   }
 
 
