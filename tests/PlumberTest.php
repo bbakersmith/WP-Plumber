@@ -436,7 +436,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   }
 
 
-  public function testGettingPodData() {
+  public function testParsingPodSelectorsAndAssigningFakeData() {
     // check that pod objects are receiving the correct pod definitions and
     // filters
     global $wp_router_stub;
