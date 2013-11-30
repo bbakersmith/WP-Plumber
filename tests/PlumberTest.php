@@ -65,6 +65,11 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->will($this->returnValue(dirname(__FILE__).'/views/')
     );
 
+    $pod_stub_class = $this->getMockClass('PlumberPod',
+      array('get_data')
+    );
+    $plumber_stub->plumber_pod_class = $pod_stub_class;
+
     Plumber::set_active_instance($plumber_stub);
 
     $wp_route_definitions = array(
@@ -130,10 +135,6 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $wp_route_templates = array(
 
-      'default' => array(
-        'pods' => array('settings:demo_site_settings')
-      ),
-
       'list_page' => array(
         'pod_filters' => array(
           'list_items' => array(
@@ -153,8 +154,14 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     );
 
 
+    $wp_route_defaults = array(
+      'pods' => array('settings:demo_site_settings')
+    );
+
+
     Plumber::set_routes($wp_route_definitions);
     Plumber::set_route_templates($wp_route_templates);
+    Plumber::set_route_defaults($wp_route_defaults);
     Plumber::set_view_render('UserFunctionStubs::view_render');
   }
 
@@ -322,36 +329,26 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_pre_render')
-      ->with($this->equalTo(
-        array(
-          'route_vars' => array(
-            'test_var' => 'test_value'
-          )
-        )
-      ))
+      ->with($this->callback(function($args) {
+        return $args['route_vars'] == array('test_var' => 'test_value');
+      }))
       ->will($this->returnValue(false)
     );
 
     $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_view_render')
       ->with($this->equalTo('pages/home'),
-        $this->equalTo(array(
-          'route_vars' => array(
-            'test_var' => 'test_value'
-          )
-        ))
+        $this->callback(function($args) {
+          return $args['route_vars'] == array('test_var' => 'test_value');
+        })
       )
       ->will($this->returnValue(false));
 
     $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_post_render')
-      ->with($this->equalTo(
-        array(
-          'route_vars' => array(
-            'test_var' => 'test_value'
-          )
-        )
-      ))
+      ->with($this->callback(function($args) {
+        return $args['route_vars'] == array('test_var' => 'test_value');
+      }))
       ->will($this->returnValue(false)
     );
 
@@ -369,13 +366,9 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_pre_render')
-      ->with($this->equalTo(
-        array(
-          'route_vars' => array(
-            'test_var' => 'test_value'
-          )
-        )
-      ))
+      ->with($this->callback(function($args) {
+        return $args['route_vars'] == array('test_var' => 'test_value');
+      }))
       ->will($this->returnValue(
         array(
           'route_vars' => array(
@@ -387,23 +380,17 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_view_render')
       ->with($this->equalTo('pages/home'),
-        $this->equalTo(array(
-          'route_vars' => array(
-            'test_var' => 'new_value'
-          )
-        ))
+        $this->callback(function($args) {
+          return $args['route_vars'] == array('test_var' => 'new_value');
+        })
       )
       ->will($this->returnValue(false));
 
     $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_post_render')
-      ->with($this->equalTo(
-        array(
-          'route_vars' => array(
-            'test_var' => 'new_value'
-          )
-        )
-      ))
+      ->with($this->callback(function($args) {
+        return $args['route_vars'] == array('test_var' => 'new_value');
+      }))
       ->will($this->returnValue(false));
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
@@ -460,18 +447,33 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       array('get_data')
     );
 
-    $local_pod_stub_class::staticExpects($this->exactly(1))
+    $local_pod_stub_class::staticExpects($this->exactly(2))
       ->method('get_data')
       ->with(
-        $this->equalTo('article'),
-        $this->equalTo('a-test-slug')
-      )
-      ->will($this->returnValue(
-        array(
-          'pod_test_title' => 'A Test Title',
-          'pod_test_url' => 'http://test.com'
+        $this->logicalOr(
+          $this->equalTo('article'), 
+          $this->equalTo('demo_site_settings')
+        ),
+        $this->logicalOr(
+          $this->equalTo('a-test-slug'),
+          $this->equalTo(false)
         )
-      ));
+      )
+      ->will($this->returnCallback(function($type, $filter) {
+        if($type == 'article') {
+          return array(
+            'pod_test_title' => 'A Test Title',
+            'pod_test_url' => 'http://test.com'
+          );
+        } else if($type == 'demo_site_settings') {
+          return array(
+            'global_title' => 'Global Test Title',
+            'global_url' => 'http://test.com'
+          );
+        } else {
+          return null;
+        }
+      }));
 
     $plumber->plumber_pod_class = $local_pod_stub_class;
 
@@ -481,10 +483,10 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->with(
         $this->equalTo('pages/articles/single'),
         $this->callback(function($args) {
-          return isset($args['content']) &&
-                 isset($args['content']['pod_test_title']) &&
-                 $args['content']['pod_test_title'] == 'A Test Title' && 
-                 $args['content']['pod_test_url'] == 'http://test.com';
+          return $args['content']['pod_test_title'] == 'A Test Title' && 
+                 $args['content']['pod_test_url'] == 'http://test.com' &&
+                 $args['settings']['global_title'] == 'Global Test Title' && 
+                 $args['settings']['global_url'] == 'http://test.com';
         }))
         ->will($this->returnValue(false)
       );

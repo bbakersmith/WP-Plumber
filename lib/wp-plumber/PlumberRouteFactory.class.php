@@ -38,7 +38,6 @@ class PlumberRouteFactory {
         $new_definition = self::apply_a_template($definition, $templates);
         $all_applied_definitions[$path] = $new_definition;
       }
-
       return $all_applied_definitions;
     } else {
       return $route_defs;
@@ -47,6 +46,7 @@ class PlumberRouteFactory {
 
 
   private function apply_a_template($definition, $templates) {
+    $last = false;
     if(array_key_exists('route_template', $definition)) {
       if($definition['route_template'] == false) {
         // do not apply any template if route_template is defined false
@@ -55,13 +55,8 @@ class PlumberRouteFactory {
       } 
     } else {
       // assume 'default' if route_template not defined
-      $definition['route_template'] = 'default';
-    }
-    
-    if($definition['route_template'] == 'default') {
+      $definition['route_template'] = '_plumber_default';
       $last = true;
-    } else {
-      $last = false;
     }
 
     if(array_key_exists($definition['route_template'], $templates)) {
@@ -70,7 +65,7 @@ class PlumberRouteFactory {
       unset($definition['route_template']);
 
       $cummulative_attribute_names = array('pods', 'pod_filters');
-      $cummulative_definitions = self::merge_cummulative_vals(
+      $cummulative_definitions = $this->merge_cummulative_vals(
         $definition,
         $base_definition, 
         $cummulative_attribute_names
@@ -91,7 +86,9 @@ class PlumberRouteFactory {
 // print '<hr/>';
 
       if($last == false) {
-        return self::apply_a_template($merged_definition, $templates);
+        return $this->apply_a_template($merged_definition, $templates);
+      } else {
+        $definition = $merged_definition;
       }
     }
 

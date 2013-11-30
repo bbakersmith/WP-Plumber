@@ -38,13 +38,20 @@ class PlumberInstance {
   }
 
 
-  public function set_routes($definitions) {
-    $this->route_definitions = $definitions;
+  public function set_routes($defs) {
+    $this->route_definitions = array_merge($defs, $this->route_definitions);
   }
 
 
   public function set_route_templates($templates) {
-    $this->route_templates = $templates;
+    $this->route_templates = array_merge($templates, $this->route_templates);
+  }
+
+
+  public function set_route_defaults($defaults) {
+    $this->set_route_templates(array(
+      '_plumber_default' => $defaults
+    ));
   }
 
 
