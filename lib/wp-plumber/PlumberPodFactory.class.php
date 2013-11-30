@@ -23,7 +23,7 @@ class PlumberPodFactory extends PlumberFactory {
       // handle dynamic query vars
       $query_var_key = self::get_query_var_key($pod_string);
       if($query_var_key != false) {
-        $parts = explode('[', $pod_string, 2);
+        $parts = explode('{', $pod_string, 2);
         $pod_string = $parts[0];
         $pod_id_or_slug = $query_vars[$query_var_key];
       }
@@ -49,10 +49,15 @@ class PlumberPodFactory extends PlumberFactory {
       }
 
       // add pod(s) to array
-      $all_pods[$results_key] = new $this->_class_to_create($pod_type, $filter_by);
+      $all_pods[$results_key] = $this->create_single_pod($pod_type, $filter_by);
     }
 
     return $all_pods;
+  }
+
+
+  protected function create_single_pod($pod_type, $filter_by) {
+    return new $this->_class_to_create($pod_type, $filter_by);
   }
 
 

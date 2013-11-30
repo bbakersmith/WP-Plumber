@@ -57,8 +57,15 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
 
     $plumber_stub = $this->getMock('PlumberInstance', 
-      array('get_all_pod_data', 'get_absolute_views_directory')
+      array('get_absolute_views_directory')
     );
+
+    $pod_factory_stub = $this->getMockBuilder('PlumberPodFactory')
+      ->setMethods(array('create_pods'))
+      ->disableOriginalConstructor()
+      ->getMock();
+
+    $plumber_stub->plumber_pod_factory = $pod_factory_stub;
  
     $plumber_stub->expects($this->any())
       ->method('render_view_template')
@@ -426,14 +433,14 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $local_function_stubs->expects($this->once())
       ->method('singleton_view_render')
       ->with(
-       $this->equalTo('pages/articles'),
-       $this->callback(function($args) {
-           $page = $args['route_vars']['page'];
-           $other = $args['route_vars']['something'];
-           return $page == 2 && $other == 'else';
-         })
-       )
-       ->will($this->returnValue(false));
+        $this->equalTo('pages/articles'),
+        $this->callback(function($args) {
+          $page = $args['route_vars']['page'];
+          $other = $args['route_vars']['something'];
+          return $page == 2 && $other == 'else';
+        })
+      )
+      ->will($this->returnValue(false));
 
     Plumber::create_routes($wp_router_stub);
 
@@ -449,7 +456,70 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // filters
     global $wp_router_stub;
 
+    $plumber = Plumber::get_active_instance();
+
+    // BEGIN PROBLEMS //
+
+    // the issue is whether expectations can be set up on a class
+    // for its instances, or if the damned factory class has to be
+    // mocked in order to return the proper objects...
+
+    $local_pod_stub = $this->getMockBuilder('PlumberPod')
+      ->setMockClassName('MockPlumberPod')
+      ->setMethods(array('get_pod_data'))
+      ->disableOriginalConstructor()
+      ->getMock();
+
+    $local_pod_stub->expects($this->once())
+      ->method('get_pod_data')
+      ->with(
+        $this->equalTo('article'),
+        $this->equalTo('a-test-slug')
+      )
+      ->will($this->returnValue(
+        array(
+          'pod_test_title' => 'A Test Title',
+          'pod_test_url' => 'http://test.com'
+        )
+      ));
+
+    $local_pod_factory_stub = $this->getMockBuilder('PlumberPodFactory')
+      ->setMethods(array('create_single_pod'))
+      ->disableOriginalConstructor()
+      ->getMock();
+
+    $local_pod_factory_stub->expects($this->exactly(1))
+      ->method('create_single_pod')
+      ->with(
+        $this->equalTo('article'),
+        $this->equalTo('a-test-slug')
+      )
+      ->will($this->returnValue($local_pod_stub));
+
+    $plumber->plumber_pod_factory = $local_pod_factory_stub;
+
+    // END PROBLEMS //
+
     $local_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs->expects($this->once())
+      ->method('singleton_view_render')
+      ->with(
+        $this->equalTo('pages/articles/single'),
+        $this->callback(function($args) {
+          return array_key_exists('content', $args) &&
+                 array_key_exists('pod_test_title', $args['content']) &&
+                 $args['content']['pod_test_title'] == 'A Test Title' && 
+                 $args['content']['pod_test_url'] == 'http://test.com';
+        }))
+        ->will($this->returnValue(false)
+      );
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
+
+    Plumber::set_active_instance($plumber);
+
+    Plumber::create_routes($wp_router_stub);
+    Plumber::router_callback(4, 'a-test-slug');
   }
 
 

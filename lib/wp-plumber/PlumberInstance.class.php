@@ -3,12 +3,15 @@
 class PlumberInstance {
 
 
+  public $plumber_route_factory = null;
   public $plumber_route_class  = 'PlumberRoute';
+
+  public $plumber_pod_factory = null;
   public $plumber_pod_class    = 'PlumberPod';
 
-  private $debug = false;
+  private $debug               = false;
   private $views_directory     = 'views';
-  private $view_render         = ''; // TODO
+  private $view_render         = '';        // TODO add default render fn
   private $route_templates     = array();
   private $route_definitions   = array();
   private $routes              = array();
@@ -108,14 +111,28 @@ class PlumberInstance {
 
 
   protected function create_routes_with_factory($defs, $templates) {
-    $factory = new PlumberRouteFactory($this->plumber_route_class);
+    // if factory object has been injected, use that. otherwise
+    // create a new factory object using the default class
+    if($this->plumber_route_factory == null) {
+      $this->plumber_route_factory = new PlumberRouteFactory(
+        $this->plumber_route_class
+      );
+    }
+    $factory = $this->plumber_route_factory;
     $routes = $factory->create_routes($defs, $templates);
     return $routes;
   }
 
 
   protected function get_all_pod_data($pods, $filters, $route_vars) {
-    $factory = new PlumberPodFactory($this->plumber_pod_class);
+    // if factory object has been injected, use that. otherwise
+    // create a new factory object using the default class
+    if($this->plumber_pod_factory == null) {
+      $this->plumber_pod_factory = new PlumberPodFactory(
+        $this->plumber_pod_class
+      );
+    }
+    $factory = $this->plumber_pod_factory;
     $pods = $factory->create_pods($pods, $filters, $route_vars);
     return $pods;
   }
