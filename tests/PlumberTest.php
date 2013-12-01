@@ -118,8 +118,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ),
 
       // 6
-      'odd-man' => array(
-        'route_template' => 'false'
+      'no-inheritance' => array(
+        'route_template' => false
       ),
 
       // 7
@@ -164,7 +164,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
     $wp_route_defaults = array(
-      'pods' => array('settings:demo_site_settings')
+      'pods' => array('settings:demo_site_settings'),
+      'view_template' => 'pages/default'
     );
 
 
@@ -548,6 +549,34 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     Plumber::create_routes($wp_router_stub);
     Plumber::router_callback(5, 'a-test-slug');
+  }
+
+
+  public function testMultiTemplateDefaultInheritanceOverride() {
+    // check that pod objects are receiving the correct pod definitions and
+    // filters
+    global $wp_router_stub;
+
+    $plumber = Plumber::get_active_instance();
+
+    $local_pod_stub_class = $this->getMockClass('PlumberPod',
+      array('get_data')
+    );
+
+    $local_pod_stub_class::staticExpects($this->never())->method('get_data');
+
+    $local_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs->expects($this->never())
+      ->method('singleton_view_render');
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
+
+    $plumber->plumber_pod_class = $local_pod_stub_class;
+
+    Plumber::set_active_instance($plumber);
+
+    Plumber::create_routes($wp_router_stub);
+    Plumber::router_callback(6);
   }
 
 
