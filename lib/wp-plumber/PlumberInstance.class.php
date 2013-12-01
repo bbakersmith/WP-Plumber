@@ -50,7 +50,7 @@ class PlumberInstance {
 
   public function set_route_defaults($defaults) {
     $this->set_route_templates(array(
-      '_plumber_default' => $defaults
+      '_default' => $defaults
     ));
   }
 

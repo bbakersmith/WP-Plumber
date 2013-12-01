@@ -55,7 +55,7 @@ class PlumberRouteFactory {
       } 
     } else {
       // assume 'default' if route_template not defined
-      $definition['route_template'] = '_plumber_default';
+      $definition['route_template'] = '_default';
       $last = true;
     }
 
@@ -76,14 +76,6 @@ class PlumberRouteFactory {
         $definition,
         $cummulative_definitions
       );
-
-// print '<hr/>';
-// print '<hr/>';
-// var_dump($definition);
-// print '<hr/>';
-// var_dump($merged_definition);
-// print '<hr/>';
-// print '<hr/>';
 
       if($last == false) {
         return $this->apply_a_template($merged_definition, $templates);

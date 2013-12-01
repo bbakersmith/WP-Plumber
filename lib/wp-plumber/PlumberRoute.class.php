@@ -6,6 +6,7 @@ class PlumberRoute {
   private $definition = array(
     'id' => 999,
     'path' => '',
+    'http_method' => 'GET',
     'view_template' => false,
     'pods' => array(),
     'pod_filters' => array(),

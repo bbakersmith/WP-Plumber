@@ -113,11 +113,16 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ),
 
       // 5
+      'multi-inheritance' => array(
+        'route_template' => 'simple_template'
+      ),
+
+      // 6
       'odd-man' => array(
         'route_template' => 'false'
       ),
 
-      // 6
+      // 7
       'wrong-man' => array(
         'pre_render_fn' => 'notreal',
         'post_render_fn' => 'notreal',
@@ -125,7 +130,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
         'route_template' => 'notreal'
       ), 
 
-      // 7
+      // 8
       '*' => array(
         'view_template' => 'pages/home'
       )
@@ -149,6 +154,10 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
         'pods' => array('list_items:article'),
         'view_template' => 'pages/articles',
         'route_template' => 'list_page'
+      ),
+
+      'simple_template' => array(
+        'view_template' => 'pages/simple'
       )
 
     );
@@ -497,6 +506,48 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     Plumber::create_routes($wp_router_stub);
     Plumber::router_callback(4, 'a-test-slug');
+  }
+
+
+  public function testMultiTemplateDefaultInheritance() {
+    // check that pod objects are receiving the correct pod definitions and
+    // filters
+    global $wp_router_stub;
+
+    $plumber = Plumber::get_active_instance();
+
+    $local_pod_stub_class = $this->getMockClass('PlumberPod',
+      array('get_data')
+    );
+
+    $local_pod_stub_class::staticExpects($this->any())
+      ->method('get_data')
+      ->with($this->equalTo('demo_site_settings'), false)
+      ->will($this->returnValue(array(
+        'global_title' => 'Global Test Title',
+        'global_url' => 'http://test.com'
+      )));
+
+    $local_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs->expects($this->once())
+      ->method('singleton_view_render')
+      ->with(
+        $this->equalTo('pages/simple'),
+        $this->callback(function($args) {
+          return $args['settings']['global_title'] == 'Global Test Title' && 
+                 $args['settings']['global_url'] == 'http://test.com';
+        }))
+        ->will($this->returnValue(false)
+      );
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
+
+    $plumber->plumber_pod_class = $local_pod_stub_class;
+
+    Plumber::set_active_instance($plumber);
+
+    Plumber::create_routes($wp_router_stub);
+    Plumber::router_callback(5, 'a-test-slug');
   }
 
 
