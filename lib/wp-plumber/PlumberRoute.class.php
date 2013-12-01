@@ -4,7 +4,8 @@ class PlumberRoute {
 
 
   private $definition = array(
-    'id' => 999,
+    'id' => '',
+    'rank' => 0,
     'path' => '',
     'http_method' => 'GET',
     'view_template' => false,
@@ -22,6 +23,11 @@ class PlumberRoute {
 
   public function get_id() {
     return $this->get_generic_attribute('id');
+  }
+
+
+  public function get_rank() {
+    return $this->get_generic_attribute('rank');
   }
 
 
@@ -73,7 +79,13 @@ class PlumberRoute {
   private function build_standard_definition($plumber_definition) {
     $new_definition = array(
       'path' => $this->build_path($plumber_definition['path']),
-      'page_callback' => 'Plumber::router_callback',
+      'page_callback' => array(
+        'DELETE' => 'Plumber::router_callback_delete',
+        'GET' => 'Plumber::router_callback_get',
+        'POST' => 'Plumber::router_callback_post',
+        'PUT' => 'Plumber::router_callback_put',
+        'default' => 'Plumber::router_callback_get'
+      ),
       'template' => false,
       'query_vars' => array(),
       'page_arguments' => array()
@@ -105,7 +117,7 @@ class PlumberRoute {
 
 
   private function build_vars_and_args($definition) {
-    $query_vars = array('plumber_route_id' => ''.$definition['id']);
+    $query_vars = array('plumber_route_id' => ''.$definition['path']);
     $page_arguments = array('plumber_route_id');
     $vars_match = $this->parse_vars($definition['path']);
     $vars = $vars_match[1];

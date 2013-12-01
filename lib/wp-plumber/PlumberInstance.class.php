@@ -62,6 +62,11 @@ class PlumberInstance {
     );
 
     $all_routes = $this->routes;
+    $route_ranks = array();
+    foreach($all_routes as $key => $route) {
+      $route_ranks[$key] = $route->get_rank();
+    }
+    array_multisort($route_ranks, SORT_ASC, $all_routes);
     $wp_router_definitions = $this->get_wp_router_definitions($all_routes);
     foreach($wp_router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
@@ -69,8 +74,17 @@ class PlumberInstance {
   }
 
 
-  public function router_callback() {
-    $args = func_get_args();
+  public function __call($method, $args) {
+    // if router_callback_get (etc) method is called, convert it for
+    // standard router_callback method
+    if(preg_match('/^router_callback_(.*)$/', $method, $matches)) {
+      $http_method = $matches[1][0];
+      $this->router_callback($args, $http_method);
+    }
+  }
+
+
+  public function router_callback($args, $http_method='GET') {
     // first callback arg is id, the rest are query_vars
     $id = $args[0];
     $route = $this->routes[$id];

@@ -17,8 +17,11 @@ class PlumberRouteFactory {
     $new_routes = array();
     $rank = 0;
     foreach($applied_defs as $path => $def) {
-      $def['id'] = $rank;
-      array_push($new_routes, self::create_route_object($path, $def));
+      $def['rank'] = $rank;
+      // for backwards compatibility from when ids were not the same as
+      // the path
+      $def['id'] = $path;
+      $new_routes[$path] = self::create_route_object($path, $def);
       $rank++;
     }
     return $new_routes;

@@ -215,11 +215,18 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // bare minimum homepage test
     $wp_router_stub->expects($this->at(0))
       ->method('add_route')
-      ->with($this->equalTo('$'),
-             $this->callback(function($def) {
-               return $def['query_vars']['plumber_route_id'] == 0 &&
-                      $def['page_callback'] == 'Plumber::router_callback' &&
-                      $def['template'] == false;
+      ->with(
+        $this->equalTo('$'),
+        $this->callback(function($def) {
+          return $def['query_vars']['plumber_route_id'] == '^' &&
+                 $def['page_callback'] == array(
+                   'DELETE' => 'Plumber::router_callback_delete',
+                   'GET' => 'Plumber::router_callback_get',
+                   'POST' => 'Plumber::router_callback_post',
+                   'PUT' => 'Plumber::router_callback_put',
+                   'default' => 'Plumber::router_callback_get'
+                 ) &&
+                 $def['template'] == false;
              }))
       ->will($this->returnValue(null));
 
@@ -239,7 +246,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->method('add_route')
       ->with($this->equalTo('^articles/(.*)$'),
              $this->callback(function($def) {
-               return $def['query_vars']['plumber_route_id'] == 3 &&
+               return $def['query_vars']['plumber_route_id'] == 'articles/{page}' &&
                       $def['query_vars']['page'] == 1 &&
                       $def['page_arguments'] == array(
                         'plumber_route_id',
@@ -365,7 +372,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
     Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback(0);
+    Plumber::router_callback_get('^');
   }
 
 
@@ -406,7 +413,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
     Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback(0);
+    Plumber::router_callback_get('^');
   }
 
 
@@ -442,7 +449,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
     // id, page
-    Plumber::router_callback(3, 2);
+    Plumber::router_callback_get('articles/{page}', 2);
   }
 
 
@@ -506,7 +513,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     Plumber::set_active_instance($plumber);
 
     Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback(4, 'a-test-slug');
+    Plumber::router_callback_get('article/{id}', 'a-test-slug');
   }
 
 
@@ -548,7 +555,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     Plumber::set_active_instance($plumber);
 
     Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback(5, 'a-test-slug');
+    Plumber::router_callback_get('multi-inheritance', 'a-test-slug');
   }
 
 
@@ -576,7 +583,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     Plumber::set_active_instance($plumber);
 
     Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback(6);
+    Plumber::router_callback_get('no-inheritance');
   }
 
 
