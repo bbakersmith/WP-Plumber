@@ -15,6 +15,7 @@ require_once($plumber_plugin_directory.'/PlumberInstance.class.php');
 require_once($plumber_plugin_directory.'/Plumber.class.php');
 require_once($plumber_plugin_directory.'/PlumberFactory.class.php');
 require_once($plumber_plugin_directory.'/PlumberRoute.class.php');
+require_once($plumber_plugin_directory.'/PlumberRouteContainer.class.php');
 require_once($plumber_plugin_directory.'/PlumberRouteFactory.class.php');
 require_once($plumber_plugin_directory.'/PlumberPod.class.php');
 require_once($plumber_plugin_directory.'/PlumberPodFactory.class.php');

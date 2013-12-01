@@ -17,6 +17,16 @@ class PlumberInstance {
   private $routes              = array();
 
 
+  public function __call($method, $args) {
+    // if router_callback_get (etc) method is called, convert it for
+    // standard router_callback method
+    if(preg_match('/^router_callback_(.*)$/', $method, $matches)) {
+      $http_method = strtoupper($matches[1]);
+      $this->router_callback($args, $http_method);
+    }
+  }
+
+
   public function debug($debug_mode=true) {
     $this->debug = $debug_mode;
   }
@@ -61,35 +71,28 @@ class PlumberInstance {
       $this->route_templates
     );
 
-    $all_routes = $this->routes;
+    // sort routes by rank, allowing the path to be used as id
+    $all_route_containers = $this->routes;
     $route_ranks = array();
-    foreach($all_routes as $key => $route) {
-      $route_ranks[$key] = $route->get_rank();
+    foreach($all_route_containers as $key => $container) {
+      $route_ranks[$key] = $container->get_rank();
     }
-    array_multisort($route_ranks, SORT_ASC, $all_routes);
-    $wp_router_definitions = $this->get_wp_router_definitions($all_routes);
-    foreach($wp_router_definitions as $route => $definition) {
+    array_multisort($route_ranks, SORT_ASC, $all_route_containers);
+
+    $router_definitions = $this->get_wp_router_definitions($all_route_containers);
+    foreach($router_definitions as $route => $definition) {
       $router->add_route($definition['path'], $definition);
-    }
-  }
-
-
-  public function __call($method, $args) {
-    // if router_callback_get (etc) method is called, convert it for
-    // standard router_callback method
-    if(preg_match('/^router_callback_(.*)$/', $method, $matches)) {
-      $http_method = $matches[1][0];
-      $this->router_callback($args, $http_method);
     }
   }
 
 
   public function router_callback($args, $http_method='GET') {
     // first callback arg is id, the rest are query_vars
-    $id = $args[0];
-    $route = $this->routes[$id];
+    $path = $args[0];
+    $route_container = $this->routes[$path];
+    $route = $route_container->get_route($http_method);
 
-    $router_def = $route->get_router_definition();
+    $router_def = $route_container->get_router_definition();
     $page_arg_keys = $router_def['page_arguments'];
     $query_vars = $this->get_query_vars($page_arg_keys, $args);
 
@@ -183,12 +186,13 @@ class PlumberInstance {
   }
 
 
-  protected function get_wp_router_definitions($all_routes) {
+  protected function get_wp_router_definitions($all_route_containers) {
     $all_definitions = array();
 
-    if(count($all_routes) > 0) {
-      foreach($all_routes as $route) {
-        $all_definitions[$route->get_id()] = $route->get_router_definition();
+    if(count($all_route_containers) > 0) {
+      foreach($all_route_containers as $container) {
+        $definition = $container->get_router_definition();
+        $all_definitions[$container->get_path()] = $definition;
       }
     }
 

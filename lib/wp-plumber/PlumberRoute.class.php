@@ -4,15 +4,15 @@ class PlumberRoute {
 
 
   private $definition = array(
-    'id' => '',
-    'rank' => 0,
-    'path' => '',
+    'id' => '', //
+    'path' => '', //
     'http_method' => 'GET',
     'view_template' => false,
     'pods' => array(),
     'pod_filters' => array(),
     'pre_render' => false,
-    'post_render' => false
+    'post_render' => false,
+    'route_vars' => array()
   );
 
 
@@ -21,13 +21,13 @@ class PlumberRoute {
   }
 
 
-  public function get_id() {
+  public function get_id() { 
     return $this->get_generic_attribute('id');
   }
 
 
-  public function get_rank() {
-    return $this->get_generic_attribute('rank');
+  public function get_http_method() {
+    return $this->get_generic_attribute('http_method');
   }
 
 
@@ -67,79 +67,6 @@ class PlumberRoute {
     } else {
       return $default;
     }
-  }
-
-
-  public function get_router_definition() {
-    $router_definition = $this->build_standard_definition($this->definition);
-    return $router_definition;
-  }
-
-
-  private function build_standard_definition($plumber_definition) {
-    $new_definition = array(
-      'path' => $this->build_path($plumber_definition['path']),
-      'page_callback' => array(
-        'DELETE' => 'Plumber::router_callback_delete',
-        'GET' => 'Plumber::router_callback_get',
-        'POST' => 'Plumber::router_callback_post',
-        'PUT' => 'Plumber::router_callback_put',
-        'default' => 'Plumber::router_callback_get'
-      ),
-      'template' => false,
-      'query_vars' => array(),
-      'page_arguments' => array()
-    );
-
-    $vars_and_args = $this->build_vars_and_args($plumber_definition);
-
-    $router_definition = array_merge($new_definition, $vars_and_args);
-    return $router_definition;
-  }
-
-
-  private function build_path($plumber_path) {
-    $new_path = preg_replace('/{([^\/\s]+)}/', '(.*)', $plumber_path);
-
-    // convert homepage symbol for WP Router
-    if($new_path == '^') {
-      $final_path = '$';
-
-    // convert catch-all symbol for WP Router
-    } else if($new_path == '*') {
-      $final_path = '.*$';
-    } else {
-      $final_path = '^'.$new_path.'$';
-    }
-
-    return $final_path;
-  }  
-
-
-  private function build_vars_and_args($definition) {
-    $query_vars = array('plumber_route_id' => ''.$definition['path']);
-    $page_arguments = array('plumber_route_id');
-    $vars_match = $this->parse_vars($definition['path']);
-    $vars = $vars_match[1];
-
-    if(count($vars) > 0) {
-      foreach($vars as $k => $v) {
-        $query_vars[$v] = $k + 1;
-        array_push($page_arguments, $v);
-      }
-    }
-
-    $vars_and_args = array(
-      'query_vars' => $query_vars,
-      'page_arguments' => $page_arguments
-    );
-    return $vars_and_args;
-  }
-
-
-  private function parse_vars($path) {
-    preg_match_all('/{([^\/\s]+)}/', $path, $all_matches);
-    return $all_matches;
   }
 
 

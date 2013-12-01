@@ -17,11 +17,21 @@ class PlumberRouteFactory {
     $new_routes = array();
     $rank = 0;
     foreach($applied_defs as $path => $def) {
-      $def['rank'] = $rank;
+      // the first route to be defined for a given path determines the
+      // order in which WP Router will check that path. so if a GET
+      // is defined for a specific path then any following POST, PUT,
+      // or DELETE definitions will inherit the same path evaluation
+      // rank as the GET.
+      if(array_key_exists($path, $new_routes) == false) {
+        $new_routes[$path] = new PlumberRouteContainer($path, $rank);
+      }
+
       // for backwards compatibility from when ids were not the same as
       // the path
       $def['id'] = $path;
-      $new_routes[$path] = self::create_route_object($path, $def);
+      $created_route = self::create_route_object($path, $def);
+      $http_method = $created_route->get_http_method();
+      $new_routes[$path]->set_route($created_route, $http_method);
       $rank++;
     }
     return $new_routes;
@@ -29,18 +39,15 @@ class PlumberRouteFactory {
 
 
   private function apply_route_templates($route_defs, $templates) {
-// print "defs: ";
-// var_dump($route_defs);
-// print "templates: ";
-// var_dump($templates);
     if(count($route_defs) > 0 && count($templates) > 0) {
       $all_applied_route_defs = array();
 
-      // merge to generate initial arg set
+      // merge to generate route creation definition
       foreach($route_defs as $path => $definition) {
         $new_definition = self::apply_a_template($definition, $templates);
         $all_applied_definitions[$path] = $new_definition;
       }
+
       return $all_applied_definitions;
     } else {
       return $route_defs;
