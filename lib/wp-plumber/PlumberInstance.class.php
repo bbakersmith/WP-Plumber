@@ -48,20 +48,20 @@ class PlumberInstance {
   }
 
 
-  public function set_routes($defs) {
-    $this->route_definitions = array_merge($defs, $this->route_definitions);
+  public function add_route($path, $def) {
+    // prevent conflicts with duplicate paths, for dif http_methods
+    $key_protected_route_defintion = array($path, $def);
+    $this->route_definitions[] = $key_protected_route_defintion;
   }
 
 
-  public function set_route_templates($templates) {
-    $this->route_templates = array_merge($templates, $this->route_templates);
+  public function add_route_template($name, $template) {
+    $this->route_templates[$name] = $template;
   }
 
 
   public function set_route_defaults($defaults) {
-    $this->set_route_templates(array(
-      '_default' => $defaults
-    ));
+    $this->route_templates['_default'] = $defaults;
   }
 
 
@@ -202,13 +202,11 @@ class PlumberInstance {
 
   protected function render_view_template($template, $render_args) {
     if($template != false) {
-
       $full_views_path = $this->get_absolute_views_directory();
       $template_path = $full_views_path.$template;
 
       $render_fn = $this->view_render;
       call_user_func($render_fn, $template_path, $render_args);
-
     }
   }
 

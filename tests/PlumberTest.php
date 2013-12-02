@@ -72,106 +72,102 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     Plumber::set_active_instance($plumber_stub);
 
-    $wp_route_definitions = array(
-
-      // 0
-      '^' => array(
+    // 0
+    Plumber::add_route(
+      '^', array(
         'view_template' => 'pages/home',
         'route_vars' => array(
           'test_var' => 'test_value'
         ),
         'pre_render' => 'UserFunctionStubs::pre_render',
-        'post_render' => 'UserFunctionStubs::post_render'
-      ),
+        'post_render' => 'UserFunctionStubs::post_render'));
 
-      // 1
-      'contact-us' => array(
+    // 1
+    Plumber::add_route(
+      'contact-us', array(
         'pods' => array('content:contact_page'),
-        'view_template' => 'pages/basic_page'
-      ),
+        'view_template' => 'pages/basic_page'));
 
-      // 2
-      'articles' => array(
+    // 2
+    Plumber::add_route(
+      'articles', array(
         'route_vars' => array(
-          // can this be an integer or must it be a string due to
-          // wp router assuming integers are dynamic variable numbers?
           'page' => 1
         ),
-        'route_template' => 'articles_list_page'
-      ),
+        'route_template' => 'articles_list_page'));
 
-      // 3 
-      'articles/{page}' => array(
+    // 3 
+    Plumber::add_route(
+      'articles/{page}', array(
         'route_vars' => array('something' => 'else'),
-        'route_template' => 'articles_list_page'
-      ),
+        'route_template' => 'articles_list_page'));
 
-      // 4
-      'article/{id}' => array(
+    // 4
+    Plumber::add_route(
+      'article/{id}', array(
         'pods' => array('content:article{id}'),
-        'view_template' => 'pages/articles/single'
-      ),
+        'view_template' => 'pages/articles/single'));
 
-      // 5
-      'multi-inheritance' => array(
-        'route_template' => 'simple_template'
-      ),
+    // 5
+    Plumber::add_route(
+      'multi-inheritance', array(
+        'route_template' => 'simple_template'));
 
-      // 6
-      'no-inheritance' => array(
-        'route_template' => false
-      ),
+    // 6
+    Plumber::add_route(
+      'no-inheritance', array(
+        'route_template' => false));
 
-      // 7
-      'wrong-man' => array(
-        'pre_render_fn' => 'notreal',
-        'post_render_fn' => 'notreal',
+    // 7.a
+    Plumber::add_route(
+      'multi-method', array(
+        'http_method' => 'GET',
+        'route_vars' => array('method' => 'get'),
+        'pre_render' => 'UserFunctionStubs::pre_render'));
+
+    // 7.b
+    Plumber::add_route(
+      'multi-method', array(
+        'http_method' => 'POST',
+        'route_vars' => array('method' => 'post'),
+        'pre_render' => 'UserFunctionStubs::pre_render'));
+
+    // 8
+    Plumber::add_route(
+      'wrong-man', array(
+        'pre_render' => 'notreal',
+        'post_render' => 'notreal',
         'view_template' => 'notreal',
-        'route_template' => 'notreal'
-      ), 
+        'route_template' => 'notreal'));
 
-      // 8
-      '*' => array(
-        'view_template' => 'pages/home'
-      )
-      
-    );
+    // 9
+    Plumber::add_route(
+      '*', array(
+        'view_template' => 'pages/home'));
 
 
-    $wp_route_templates = array(
-
-      'list_page' => array(
+    Plumber::add_route_template(
+      'list_page', array(
         'pod_filters' => array(
           'list_items' => array(
             'orderby' => 'post_date DESC',    
             'limit' => 3,
-            'page' => '{page}'
-          )
-        )
-      ),
+            'page' => '{page}'))));
 
-      'articles_list_page' => array(
+    Plumber::add_route_template(
+      'articles_list_page', array(
         'pods' => array('list_items:article'),
         'view_template' => 'pages/articles',
-        'route_template' => 'list_page'
-      ),
+        'route_template' => 'list_page'));
 
-      'simple_template' => array(
-        'view_template' => 'pages/simple'
-      )
+    Plumber::add_route_template(
+      'simple_template', array(
+        'view_template' => 'pages/simple'));
 
-    );
-
-
-    $wp_route_defaults = array(
+    Plumber::set_route_defaults(array(
       'pods' => array('settings:demo_site_settings'),
-      'view_template' => 'pages/default'
-    );
+      'view_template' => 'pages/default'));
 
-
-    Plumber::set_routes($wp_route_definitions);
-    Plumber::set_route_templates($wp_route_templates);
-    Plumber::set_route_defaults($wp_route_defaults);
     Plumber::set_view_render('UserFunctionStubs::view_render');
   }
 
@@ -430,7 +426,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $plumber->plumber_pod_factory = $pod_factory_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
-    $local_function_stubs->expects($this->once())
+    $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_view_render')
       ->with(
         $this->equalTo('pages/articles'),
@@ -537,7 +533,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       )));
 
     $local_function_stubs = $this->get_user_function_stubs();
-    $local_function_stubs->expects($this->once())
+    $local_function_stubs->expects($this->exactly(1))
       ->method('singleton_view_render')
       ->with(
         $this->equalTo('pages/simple'),
@@ -555,6 +551,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     Plumber::set_active_instance($plumber);
 
     Plumber::create_routes($wp_router_stub);
+
     Plumber::router_callback_get('multi-inheritance', 'a-test-slug');
   }
 
@@ -587,6 +584,45 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   }
 
 
+  public function testHTTPMethodHandlingGET() {
+    global $wp_router_stub;
+
+    $local_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs->expects($this->exactly(1))
+      ->method('singleton_pre_render')
+      ->with(
+        $this->callback(function($args) {
+          return $args['route_vars']['method'] == 'get';
+        }))
+        ->will($this->returnValue(false)
+      );
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
+
+    Plumber::create_routes($wp_router_stub);
+    Plumber::router_callback_get('multi-method');
+  }
+
+
+  public function testHTTPMethodHandlingPOST() {
+    global $wp_router_stub;
+
+    $local_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs->expects($this->exactly(1))
+      ->method('singleton_pre_render')
+      ->with(
+        $this->callback(function($args) {
+          return $args['route_vars']['method'] == 'post';
+        }))
+        ->will($this->returnValue(false)
+      );
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
+
+    Plumber::create_routes($wp_router_stub);
+    Plumber::router_callback_post('multi-method');
+  }
 }
+
 
 ?>

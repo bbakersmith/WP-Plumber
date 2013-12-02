@@ -32,7 +32,8 @@ class PlumberRouteContainer {
 
 
   public function get_route($http_method='GET') {
-    return $this->http_method_routes[$http_method];
+    $route = $this->http_method_routes[$http_method];
+    return $route;
   }
 
 
