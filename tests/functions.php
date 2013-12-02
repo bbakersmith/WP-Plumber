@@ -1,99 +1,106 @@
 <?php
 
-Plumber::set_routes(array(
+// routes
 
-  // 0
-  '^' => array(
-    'view_template' => 'pages/home'
-  ),
-
-  // 1
-  'contact-us' => array(
-    'pods' => array('content:contact_page'),
-    'view_template' => 'pages/basic_page'
-  ),
-
-  // 2
-  'articles' => array(
+// 0
+Plumber::add_route(
+  '^', array(
+    'view_template' => 'pages/home',
     'route_vars' => array(
-      // can this be an integer or must it be a string due to
-      // wp router assuming integers are dynamic variable numbers?
+      'test_var' => 'test_value'
+    ),
+    'pre_render' => 'UserFunctionStubs::pre_render',
+    'post_render' => 'UserFunctionStubs::post_render'));
+
+// 1
+Plumber::add_route(
+  'contact-us', array(
+    'pods' => array('content:contact_page'),
+    'view_template' => 'pages/basic_page'));
+
+// 2
+Plumber::add_route(
+  'articles', array(
+    'route_vars' => array(
       'page' => 1
     ),
-    'route_template' => 'articles_list_page'
-  ),
+    'route_template' => 'articles_list_page'));
 
-  // 3 
-  'articles/{page}' => array(
-    'route_template' => 'articles_list_page'
-  ),
+// 3 
+Plumber::add_route(
+  'articles/{page}', array(
+    'route_vars' => array('something' => 'else'),
+    'route_template' => 'articles_list_page'));
 
-  // 4
-  'article/{id}' => array(
+// 4
+Plumber::add_route(
+  'article/{id}', array(
     'pods' => array('content:article{id}'),
-    'view_template' => 'pages/articles/single'
-  ),
+    'view_template' => 'pages/articles/single'));
 
-  // 5
-  'odd-man' => array(
-    'route_template' => 'false'
-  ),
+// 5
+Plumber::add_route(
+  'multi-inheritance', array(
+    'route_template' => 'simple_template'));
 
-  // 6
-  'wrong-man' => array(
-    'pre_render_fn' => 'notreal',
-    'post_render_fn' => 'notreal',
+// 6
+Plumber::add_route(
+  'no-inheritance', array(
+    'route_template' => false));
+
+// 7.a
+Plumber::add_route(
+  'multi-method', array(
+    'http_method' => 'GET',
+    'route_vars' => array('method' => 'get'),
+    'pre_render' => 'UserFunctionStubs::pre_render'));
+
+// 7.b
+Plumber::add_route(
+  'multi-method', array(
+    'http_method' => 'POST',
+    'route_vars' => array('method' => 'post'),
+    'pre_render' => 'UserFunctionStubs::pre_render'));
+
+// 8
+Plumber::add_route(
+  'wrong-man', array(
+    'pre_render' => 'notreal',
+    'post_render' => 'notreal',
     'view_template' => 'notreal',
-    'route_template' => 'notreal'
-  ), 
+    'route_template' => 'notreal'));
 
-  // 7
-  '*' => array(
-    'view_template' => 'pages/home'
-  )
-  
-));
+// 9
+Plumber::add_route(
+  '*', array(
+    'view_template' => 'pages/home'));
 
+// templates
 
-Plumber::set_route_templates(array(
-
-  'default' => array(
-    'pods' => array('settings:demo_site_settings')
-  ),
-
-  'list_page' => array(
+Plumber::add_route_template(
+  'list_page', array(
     'pod_filters' => array(
       'list_items' => array(
         'orderby' => 'post_date DESC',    
         'limit' => 3,
-        'page' => '{page}'
-      )
-    )
-  ),
+        'page' => '{page}'))));
 
-  'articles_list_page' => array(
+Plumber::add_route_template(
+  'articles_list_page', array(
     'pods' => array('list_items:article'),
     'view_template' => 'pages/articles',
-    'route_template' => 'list_page'
-  )
+    'route_template' => 'list_page'));
 
-));
+Plumber::add_route_template(
+  'simple_template', array(
+    'view_template' => 'pages/simple'));
 
+Plumber::set_route_defaults(array(
+  'pods' => array('settings:demo_site_settings'),
+  'view_template' => 'pages/default'));
 
-Plumber::set_view_render_fn('render_demo_view');
+// callback functions
 
-
-function render_demo_view($template, $args) {
-  
-  // convert args to local variables for easier access in views
-  extract($args);
-
-  $views_directory = Plumber::get_views_directory();
-
-  include($views_directory.'/header.php');
-  include($template.'.php');
-  include($views_directory.'/footer.php');
-
-}
+Plumber::set_view_render('UserFunctionStubs::view_render');
 
 ?>
