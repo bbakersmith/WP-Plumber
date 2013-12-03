@@ -45,7 +45,7 @@ class UserFunctionStubs {
 }
 
 
-class PlumberTest extends PHPUnit_Framework_TestCase {
+class PlumberStaticTest extends PHPUnit_Framework_TestCase {
 
 
   protected function setUp() {
@@ -66,7 +66,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     );
     $plumber->plumber_pod_class = $pod_stub_class;
 
-    Plumber::set_active_instance($plumber);
+    PlumberStatic::set_active_instance($plumber);
 
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
   }
@@ -87,9 +87,9 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
   // tests
 
 
-  public function testPlumberSingleGlobalIsCreated() {
+  public function testPlumberStaticSingleGlobalIsCreated() {
     global $plumber;
-    $this->assertEquals(Plumber::get_active_instance(), $plumber);
+    $this->assertEquals(PlumberStatic::get_active_instance(), $plumber);
   }
 
 
@@ -116,11 +116,11 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
         $this->callback(function($def) {
           return $def['query_vars']['plumber_route_id'] == '^' &&
                  $def['page_callback'] == array(
-                   'DELETE' => 'Plumber::router_callback_delete',
-                   'GET' => 'Plumber::router_callback_get',
-                   'POST' => 'Plumber::router_callback_post',
-                   'PUT' => 'Plumber::router_callback_put',
-                   'default' => 'Plumber::router_callback_get'
+                   'DELETE' => 'PlumberStatic::router_callback_delete',
+                   'GET' => 'PlumberStatic::router_callback_get',
+                   'POST' => 'PlumberStatic::router_callback_post',
+                   'PUT' => 'PlumberStatic::router_callback_put',
+                   'default' => 'PlumberStatic::router_callback_get'
                  ) &&
                  $def['template'] == false;
              }))
@@ -151,7 +151,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
              }))
       ->will($this->returnValue(null));
 
-    Plumber::create_routes($wp_router_stub);
+    PlumberStatic::create_routes($wp_router_stub);
   }
 
 
@@ -166,13 +166,13 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     // To this end I've made get_wp_router_definitions protected and
     // had it take the routes as an arg. By mocking this method and
-    // checking its method argument the Plumber::$routes will be testable
+    // checking its method argument the PlumberStatic::$routes will be testable
     // without having to expose $routes with a public accessor. It also
     // is a better approach to get_wp_router_definitions because it
-    // decouples it from the internal state of the Plumber static class.
+    // decouples it from the internal state of the PlumberStatic static class.
 // 
 //     $local_plumber = $this->getMockClass(
-//       'Plumber', 
+//       'PlumberStatic', 
 //       array(
 //         'get_all_pod_data', 
 //         'render_view_template', 
@@ -267,8 +267,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
-    Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback_get('^');
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_get('^');
   }
 
 
@@ -308,8 +308,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
-    Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback_get('^');
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_get('^');
   }
 
 
@@ -322,7 +322,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       ->setMethods(array('create_single_pod'))
       ->disableOriginalConstructor()
       ->getMock(); 
-    $plumber = Plumber::get_active_instance();
+    $plumber = PlumberStatic::get_active_instance();
     $plumber->plumber_pod_factory = $pod_factory_stub;
 
     $local_function_stubs = $this->get_user_function_stubs();
@@ -338,14 +338,14 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
       )
       ->will($this->returnValue(false));
 
-    Plumber::set_active_instance($plumber);
+    PlumberStatic::set_active_instance($plumber);
 
-    Plumber::create_routes($wp_router_stub);
+    PlumberStatic::create_routes($wp_router_stub);
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
     // id, page
-    Plumber::router_callback_get('articles/{page}', 2);
+    PlumberStatic::router_callback_get('articles/{page}', 2);
   }
 
 
@@ -354,7 +354,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // filters
     global $wp_router_stub;
 
-    $plumber = Plumber::get_active_instance();
+    $plumber = PlumberStatic::get_active_instance();
 
     $local_pod_stub_class = $this->getMockClass('PlumberPod',
       array('get_data')
@@ -406,10 +406,10 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
-    Plumber::set_active_instance($plumber);
+    PlumberStatic::set_active_instance($plumber);
 
-    Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback_get('article/{id}', 'a-test-slug');
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_get('article/{id}', 'a-test-slug');
   }
 
 
@@ -418,7 +418,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // filters
     global $wp_router_stub;
 
-    $plumber = Plumber::get_active_instance();
+    $plumber = PlumberStatic::get_active_instance();
 
     $local_pod_stub_class = $this->getMockClass('PlumberPod',
       array('get_data')
@@ -448,11 +448,11 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $plumber->plumber_pod_class = $local_pod_stub_class;
 
-    Plumber::set_active_instance($plumber);
+    PlumberStatic::set_active_instance($plumber);
 
-    Plumber::create_routes($wp_router_stub);
+    PlumberStatic::create_routes($wp_router_stub);
 
-    Plumber::router_callback_get('multi-inheritance', 'a-test-slug');
+    PlumberStatic::router_callback_get('multi-inheritance', 'a-test-slug');
   }
 
 
@@ -461,7 +461,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // filters
     global $wp_router_stub;
 
-    $plumber = Plumber::get_active_instance();
+    $plumber = PlumberStatic::get_active_instance();
 
     $local_pod_stub_class = $this->getMockClass('PlumberPod',
       array('get_data')
@@ -477,10 +477,10 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     $plumber->plumber_pod_class = $local_pod_stub_class;
 
-    Plumber::set_active_instance($plumber);
+    PlumberStatic::set_active_instance($plumber);
 
-    Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback_get('no-inheritance');
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_get('no-inheritance');
   }
 
 
@@ -499,8 +499,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
-    Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback_get('multi-method');
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_get('multi-method');
   }
 
 
@@ -519,8 +519,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
     UserFunctionStubs::set_active_instance($local_function_stubs);
 
-    Plumber::create_routes($wp_router_stub);
-    Plumber::router_callback_post('multi-method');
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_post('multi-method');
   }
 }
 

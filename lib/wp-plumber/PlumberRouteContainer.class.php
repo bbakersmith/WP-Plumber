@@ -52,11 +52,11 @@ class PlumberRouteContainer {
     $new_definition = array(
       'path' => $this->build_path($path),
       'page_callback' => array(
-        'DELETE' => 'Plumber::router_callback_delete',
-        'GET' => 'Plumber::router_callback_get',
-        'POST' => 'Plumber::router_callback_post',
-        'PUT' => 'Plumber::router_callback_put',
-        'default' => 'Plumber::router_callback_get'
+        'DELETE' => 'PlumberStatic::router_callback_delete',
+        'GET' => 'PlumberStatic::router_callback_get',
+        'POST' => 'PlumberStatic::router_callback_post',
+        'PUT' => 'PlumberStatic::router_callback_put',
+        'default' => 'PlumberStatic::router_callback_get'
       ),
       'template' => false,
       'query_vars' => array(),

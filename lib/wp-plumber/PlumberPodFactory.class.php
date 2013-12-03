@@ -65,8 +65,6 @@ class PlumberPodFactory {
 
 
   protected function create_single_pod($pod_type, $filter_by) {
-    $class = $this->_class_to_create;
-
     // instead of creating an instance, which was tricky to make array-like,
     // call a static function that instantiates a pod long enough to get
     // an array of its data.
@@ -74,6 +72,8 @@ class PlumberPodFactory {
     // this is fairly ugly, but made testing easier.. if pod class could be
     // made to behave more completely like an array (or support simple
     // casting to array) this would not be necessary.
+
+    $class = $this->_class_to_create;
     return $class::get_data($pod_type, $filter_by);
   }
 
