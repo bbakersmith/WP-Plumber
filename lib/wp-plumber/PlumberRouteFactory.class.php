@@ -5,6 +5,10 @@ class PlumberRouteFactory {
 
   protected $_class_to_create;
 
+  protected $default_route_template = '_default';
+
+  protected $cumulative_attributes = array('pods', 'pod_filters');
+
   
   function __construct($class) {
     // assign the class that is to be created by this factory
@@ -13,53 +17,32 @@ class PlumberRouteFactory {
 
 
   public function create_routes($definitions, $templates=array()) {
-    $applied_defs = $this->apply_route_templates($definitions, $templates);
-    $new_routes = array();
-    $rank = 0;
-    foreach($applied_defs as $path_def_pair) {
-      // the first route to be defined for a given path determines the
-      // order in which WP Router will check that path. so if a GET
-      // is defined for a specific path then any following POST, PUT,
-      // or DELETE definitions will inherit the same path evaluation
-      // rank as the GET.
-      $path = $path_def_pair[0];
-      $def = $path_def_pair[1];
-      if(isset($new_routes[$path]) == false) {
-        $new_routes[$path] = new PlumberRouteContainer($path, $rank);
-      }
+    $containers = array();
 
-      // for backwards compatibility from when ids were not the same as
-      // the path
-      $def['id'] = $path;
-      $created_route = self::create_route_object($path, $def);
-      $http_method = $created_route->get_http_method();
-      $new_routes[$path]->set_route($created_route, $http_method);
-      $rank++;
+    foreach($definitions as $http_method => $full_def) {
+      foreach($full_def as $path => $def) {
+        $applied_def = $this->apply_template($def, $templates);
+
+        if(array_key_exists($path, $containers)) {
+          $container = $containers[$path];
+        } else {
+          $container = new PlumberRouteContainer($path, $def['rank']);
+        }
+
+        // in case id might ever be something other than path
+        $applied_def['id'] = $path;
+        $the_route = self::create_route_object($path, $applied_def);
+
+        $container->set_route($the_route, $http_method);
+        $containers[$path] = $container;
+      }
     }
-    return $new_routes;
+
+    return $containers;
   }
 
 
-  private function apply_route_templates($route_defs, $templates) {
-    if(count($route_defs) > 0 && count($templates) > 0) {
-      $all_applied_route_defs = array();
-
-      // merge to generate route creation definition
-      foreach($route_defs as $k => $path_def_pair) {
-        $path = $path_def_pair[0];
-        $definition = $path_def_pair[1];
-        $new_definition = self::apply_a_template($definition, $templates);
-        $new_pair = array($path, $new_definition);
-        $all_applied_definitions[] = $new_pair;
-      }
-      return $all_applied_definitions;
-    } else {
-      return $route_defs;
-    }
-  }
-
-
-  private function apply_a_template($definition, $templates) {
+  private function apply_template($definition, $templates) {
     $last = false;
     if(array_key_exists('route_template', $definition)) {
       if($definition['route_template'] == false) {
@@ -69,7 +52,7 @@ class PlumberRouteFactory {
       } 
     } else {
       // assume 'default' if route_template not defined
-      $definition['route_template'] = '_default';
+      $definition['route_template'] = $this->default_route_template;
       $last = true;
     }
 
@@ -78,21 +61,19 @@ class PlumberRouteFactory {
       $base_definition = $templates[$definition['route_template']];
       unset($definition['route_template']);
 
-      $cummulative_attribute_names = array('pods', 'pod_filters');
-      $cummulative_definitions = $this->merge_cummulative_vals(
+      $cumulative_definitions = $this->merge_cumulative_vals(
         $definition,
-        $base_definition, 
-        $cummulative_attribute_names
+        $base_definition
       );
 
       $merged_definition = array_merge(
         $base_definition, 
         $definition,
-        $cummulative_definitions
+        $cumulative_definitions
       );
 
       if($last == false) {
-        return $this->apply_a_template($merged_definition, $templates);
+        return $this->apply_template($merged_definition, $templates);
       } else {
         $definition = $merged_definition;
       }
@@ -102,9 +83,9 @@ class PlumberRouteFactory {
   }
 
 
-  private function merge_cummulative_vals($def, $old_def, $key_names) {
+  private function merge_cumulative_vals($def, $old_def) {
     $new_def = array();
-    foreach($key_names as $key) {
+    foreach($this->cumulative_attributes as $key) {
 
       // merge pods rather than overwrite
       if(array_key_exists($key, $def) &&

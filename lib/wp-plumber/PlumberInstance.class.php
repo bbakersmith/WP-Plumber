@@ -11,10 +11,31 @@ class PlumberInstance {
 
   private $debug               = false;
   private $views_directory     = 'views';
-  private $view_render         = '';        // TODO add default render fn
+  private $render              = '';        // TODO add default render fn
   private $route_templates     = array();
-  private $route_definitions   = array();
+  private $route_definitions   = array(
+    'DELETE' => array(),
+    'GET' => array(),
+    'POST' => array(),
+    'PUT' => array()
+  );
   private $routes              = array();
+
+
+  public function __construct($args) {
+    $construction_keys = array(
+      'views_directory', 
+      'render'
+    );
+
+    foreach($construction_keys as $index => $key) {
+      // key must exist in array of valid construction arguments and
+      // it must have a default setting defined in the plumber instance
+      if(array_key_exists($key, $args) && isset($this->$key)) {
+        $this->$key = $args[$key];
+      }
+    }
+  }
 
 
   public function __call($method, $args) {
@@ -43,25 +64,43 @@ class PlumberInstance {
   }
 
 
-  public function set_view_render($fn) {
-    $this->view_render = $fn;
+  public function set_render($fn) {
+    $this->render = $fn;
   }
 
 
-  public function add_route($path, $def) {
-    // prevent conflicts with duplicate paths, for dif http_methods
-    $key_protected_route_defintion = array($path, $def);
-    $this->route_definitions[] = $key_protected_route_defintion;
+  public function delete($path, $def) {
+    $this->add_route('DELETE', $path, $def);
   }
 
 
-  public function add_route_template($name, $template) {
+  public function get($path, $def) {
+    $this->add_route('GET', $path, $def);
+  }
+
+
+  public function post($path, $def) {
+    $this->add_route('POST', $path, $def);
+  }
+
+
+  public function put($path, $def) {
+    $this->add_route('PUT', $path, $def);
+  }
+
+
+  private function add_route($http_method, $path, $def) {
+    $total = 0;
+    foreach($this->route_definitions as $index => $definitions) {
+      $total = $total + count($definitions);
+    }
+    $def['rank'] = $total;
+    $this->route_definitions[$http_method][$path] = $def;
+  } 
+
+
+  public function route_template($name, $template) {
     $this->route_templates[$name] = $template;
-  }
-
-
-  public function set_route_defaults($defaults) {
-    $this->route_templates['_default'] = $defaults;
   }
 
 
@@ -205,7 +244,7 @@ class PlumberInstance {
       $full_views_path = $this->get_absolute_views_directory();
       $template_path = $full_views_path.$template;
 
-      $render_fn = $this->view_render;
+      $render_fn = $this->render;
       call_user_func($render_fn, $template_path, $render_args);
     }
   }

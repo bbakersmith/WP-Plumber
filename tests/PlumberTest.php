@@ -50,17 +50,13 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
   protected function setUp() {
     global $wp_router_stub, 
-           $plumber_stub, 
+           $plumber, 
            $wp_route_definitions, 
            $wp_route_templates;
 
-    $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
+    include(dirname(__FILE__).'/functions.php');
 
-    $plumber_stub = $this->getMock('PlumberInstance', 
-      array('get_absolute_views_directory')
-    );
- 
-    $plumber_stub->expects($this->any())
+    $plumber->expects($this->any())
       ->method('render_view_template')
       ->will($this->returnValue(dirname(__FILE__).'/views/')
     );
@@ -68,11 +64,11 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     $pod_stub_class = $this->getMockClass('PlumberPod',
       array('get_data')
     );
-    $plumber_stub->plumber_pod_class = $pod_stub_class;
+    $plumber->plumber_pod_class = $pod_stub_class;
 
-    Plumber::set_active_instance($plumber_stub);
+    Plumber::set_active_instance($plumber);
 
-    include('./tests/functions.php');
+    $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
   }
 
 
@@ -92,8 +88,8 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 
 
   public function testPlumberSingleGlobalIsCreated() {
-    global $plumber_stub;
-    $this->assertEquals(Plumber::get_active_instance(), $plumber_stub);
+    global $plumber;
+    $this->assertEquals(Plumber::get_active_instance(), $plumber);
   }
 
 
@@ -175,7 +171,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
     // is a better approach to get_wp_router_definitions because it
     // decouples it from the internal state of the Plumber static class.
 // 
-//     $local_plumber_stub = $this->getMockClass(
+//     $local_plumber = $this->getMockClass(
 //       'Plumber', 
 //       array(
 //         'get_all_pod_data', 
@@ -185,7 +181,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 //     );
 // 
 //     // contact page inheriting from default route
-//     $local_plumber_stub::staticExpects($this->at(1))
+//     $local_plumber::staticExpects($this->at(1))
 //           ->method('create_routes_with_factory')
 //           ->with($this->callback(function($def) {
 //                    var_dump($def);
@@ -197,7 +193,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 //           ->will($this->returnValue(array()));
 // 
 //     // testing route_template multi-inheritance
-//     $local_plumber_stub::staticExpects($this->at(3))
+//     $local_plumber::staticExpects($this->at(3))
 //           ->method('create_routes_with_factory')
 //           ->with($this->callback(function($def) {
 //                    return $def['pod_filters'] == array(
@@ -214,7 +210,7 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 //           ->will($this->returnValue(array()));
 // 
 //     // don't inherit if route_template set to false
-//     $local_plumber_stub::staticExpects($this->at(5))
+//     $local_plumber::staticExpects($this->at(5))
 //           ->method('create_routes_with_factory')
 //           ->with($this->callback(function($def) {
 //                    return in_array(
@@ -227,14 +223,14 @@ class PlumberTest extends PHPUnit_Framework_TestCase {
 //     // if specified route template doesn't exist, just remove the 
 //     // route_template attribute and return the rest of the definition
 //     // as is
-//     $local_plumber_stub::staticExpects($this->at(6))
+//     $local_plumber::staticExpects($this->at(6))
 //           ->method('create_routes_with_factory')
 //           ->with($this->callback(function($def) {
 //                    return array_key_exists('route_template', $def) == false;
 //           }))
 //           ->will($this->returnValue(array()));
 // 
-//     $local_plumber_stub::create_routes($wp_router_stub);
+//     $local_plumber::create_routes($wp_router_stub);
 // 
   }
 

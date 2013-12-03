@@ -1,9 +1,24 @@
 <?php
 
-// routes
 
-// 0
-Plumber::add_route(
+// create plumber
+
+
+// $plumber = new Plumber(array(
+//   'render' => 'UserFunctionStubs::view_render'));
+
+$plumber = $this->getMockBuilder('PlumberInstance')
+  ->setConstructorArgs(array(
+    array('render' => 'UserFunctionStubs::view_render')))
+  ->setMethods(array(
+    'get_absolute_views_directory'))
+  ->getMock();
+
+
+// define routes
+
+
+$plumber->get(
   '^', array(
     'view_template' => 'pages/home',
     'route_vars' => array(
@@ -12,72 +27,62 @@ Plumber::add_route(
     'pre_render' => 'UserFunctionStubs::pre_render',
     'post_render' => 'UserFunctionStubs::post_render'));
 
-// 1
-Plumber::add_route(
+$plumber->get(
   'contact-us', array(
     'pods' => array('content:contact_page'),
     'view_template' => 'pages/basic_page'));
 
-// 2
-Plumber::add_route(
+$plumber->get(
   'articles', array(
     'route_vars' => array(
       'page' => 1
     ),
     'route_template' => 'articles_list_page'));
 
-// 3 
-Plumber::add_route(
+$plumber->get(
   'articles/{page}', array(
     'route_vars' => array('something' => 'else'),
     'route_template' => 'articles_list_page'));
 
-// 4
-Plumber::add_route(
+$plumber->get(
   'article/{id}', array(
     'pods' => array('content:article{id}'),
     'view_template' => 'pages/articles/single'));
 
-// 5
-Plumber::add_route(
+$plumber->get(
   'multi-inheritance', array(
     'route_template' => 'simple_template'));
 
-// 6
-Plumber::add_route(
+$plumber->get(
   'no-inheritance', array(
     'route_template' => false));
 
-// 7.a
-Plumber::add_route(
+$plumber->get(
   'multi-method', array(
-    'http_method' => 'GET',
     'route_vars' => array('method' => 'get'),
     'pre_render' => 'UserFunctionStubs::pre_render'));
 
-// 7.b
-Plumber::add_route(
+$plumber->post(
   'multi-method', array(
-    'http_method' => 'POST',
     'route_vars' => array('method' => 'post'),
     'pre_render' => 'UserFunctionStubs::pre_render'));
 
-// 8
-Plumber::add_route(
+$plumber->get(
   'wrong-man', array(
     'pre_render' => 'notreal',
     'post_render' => 'notreal',
     'view_template' => 'notreal',
     'route_template' => 'notreal'));
 
-// 9
-Plumber::add_route(
+$plumber->get(
   '*', array(
     'view_template' => 'pages/home'));
 
-// templates
 
-Plumber::add_route_template(
+// define route templates
+
+
+$plumber->route_template(
   'list_page', array(
     'pod_filters' => array(
       'list_items' => array(
@@ -85,22 +90,20 @@ Plumber::add_route_template(
         'limit' => 3,
         'page' => '{page}'))));
 
-Plumber::add_route_template(
+$plumber->route_template(
   'articles_list_page', array(
     'pods' => array('list_items:article'),
     'view_template' => 'pages/articles',
     'route_template' => 'list_page'));
 
-Plumber::add_route_template(
+$plumber->route_template(
   'simple_template', array(
     'view_template' => 'pages/simple'));
 
-Plumber::set_route_defaults(array(
+$plumber->route_template(
+  '_default', array(
   'pods' => array('settings:demo_site_settings'),
   'view_template' => 'pages/default'));
 
-// callback functions
-
-Plumber::set_view_render('UserFunctionStubs::view_render');
 
 ?>
