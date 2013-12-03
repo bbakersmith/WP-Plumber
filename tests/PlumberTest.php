@@ -3,7 +3,8 @@
 define('WP_PLUMBER_TEST', true);
 
 require_once('Plumber.php');
-include(dirname(__FILE__).'/stubs.php');
+
+require_once(dirname(__FILE__).'/stubs.php');
 
 
 class PlumberStaticTest extends PHPUnit_Framework_TestCase {
@@ -31,6 +32,9 @@ class PlumberStaticTest extends PHPUnit_Framework_TestCase {
 
     $wp_router_stub = $this->getMock('WPRouterStub', array('add_route'));
   }
+
+
+  // helpers
 
 
   public function get_user_function_stubs() {
