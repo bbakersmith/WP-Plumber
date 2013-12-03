@@ -10,8 +10,8 @@ class PlumberRoute {
     'view_template' => false,
     'pods' => array(),
     'pod_filters' => array(),
-    'pre_render' => false,
-    'post_render' => false,
+    'pre_render' => array(),
+    'post_render' => array(),
     'route_vars' => array()
   );
 

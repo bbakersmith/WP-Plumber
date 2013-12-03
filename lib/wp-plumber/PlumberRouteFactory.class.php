@@ -7,7 +7,12 @@ class PlumberRouteFactory {
 
   protected $default_route_template = '_default';
 
-  protected $cumulative_attributes = array('pods', 'pod_filters');
+  protected $cumulative_attributes = array(
+    'pods', 
+    'pod_filters',
+    'pre_render',
+    'post_render'
+  );
 
   
   function __construct($class) {
@@ -83,24 +88,42 @@ class PlumberRouteFactory {
   }
 
 
-  private function merge_cumulative_vals($def, $old_def) {
-    $new_def = array();
+  private function merge_cumulative_vals($attributes, $base_attributes) {
+    $new_attributes = array();
     foreach($this->cumulative_attributes as $key) {
-
-      // merge pods rather than overwrite
-      if(array_key_exists($key, $def) &&
-         array_key_exists($key, $old_def)) {
-        $new_def[$key] = array_merge($old_def[$key], $def[$key]);
-      } else if(array_key_exists($key, $def)) {
-        $new_def[$key] = $def[$key];
-      } else if(array_key_exists($key, $old_def)) {
-        $new_def[$key] = $old_def[$key];
+      if(array_key_exists($key, $attributes)) {
+        $clean_attrs = $this->format_cumulative_val($attributes[$key]);
       } else {
-        $new_def[$key] = array();
+        $clean_attrs = array();
       }
 
+      if(array_key_exists($key, $base_attributes)) {
+        $clean_base = $this->format_cumulative_val($base_attributes[$key]);
+      } else {
+        $clean_base = array();
+      }
+
+      // reverse both arrays before, and then the merged after
+      // to end up with the proper order for non-associative arrays,
+      // and the proper inheritance order for associative arrays
+      $merged_attrs = array_merge(
+        array_reverse($clean_base), 
+        array_reverse($clean_attrs)
+      );
+      $new_attributes[$key] = array_reverse($merged_attrs);
     }
-    return $new_def;
+    return $new_attributes;
+  }
+
+
+  private function format_cumulative_val($value) {
+    // allow individual strings as input but convert them to
+    // nested arrays
+    if(is_string($value)) {
+      return array($value);
+    } else {
+      return $value;
+    }
   }
 
 

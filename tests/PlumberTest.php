@@ -42,7 +42,9 @@ class PlumberStaticTest extends PHPUnit_Framework_TestCase {
       array(
         'singleton_pre_render', 
         'singleton_view_render', 
-        'singleton_post_render'
+        'singleton_post_render',
+        'singleton_another_render',
+        'singleton_final_render'
       )
     );
     return $user_function_stubs;
@@ -122,69 +124,6 @@ class PlumberStaticTest extends PHPUnit_Framework_TestCase {
 
   public function testRouteDefinitions() {
     global $wp_router_stub;
-
-    // TODO many of the tests below are actually intended to test 
-    // the state of the routes AFTER create_routes_with_factory
-    // has been called. Mocking the create_routes_with_factory method
-    // is the wrong approach, and I will need to get access to each
-    // route for testing another way
-
-    // To this end I've made get_wp_router_definitions protected and
-    // had it take the routes as an arg. By mocking this method and
-    // checking its method argument the PlumberStatic::$routes will be testable
-    // without having to expose $routes with a public accessor. It also
-    // is a better approach to get_wp_router_definitions because it
-    // decouples it from the internal state of the PlumberStatic static class.
-// 
-//     $local_plumber = $this->getMockClass(
-//       'PlumberStatic', 
-//       array(
-//         'get_all_pod_data', 
-//         'render_view_template', 
-//         'create_routes_with_factory'
-//       )
-//     );
-// 
-//     // contact page inheriting from default route
-//     $local_plumber::staticExpects($this->at(1))
-//           ->method('create_routes_with_factory')
-//           ->with($this->callback(function($def) {
-//                    var_dump($def);
-//                    return $def['pods'] == array(
-//                      'settings:demo_site_settings',
-//                      'content:contact_page'
-//                    );
-//           }))
-//           ->will($this->returnValue(array()));
-// 
-//     // testing route_template multi-inheritance
-//     $local_plumber::staticExpects($this->at(3))
-//           ->method('create_routes_with_factory')
-//           ->with($this->callback(function($def) {
-//                    return $def['pod_filters'] == array(
-//                      'list_items' => array(
-//                        'orderby' => 'post_date DESC',    
-//                        'limit' => 3,
-//                        'page' => '{page}'
-//                      )
-//                    ) &&
-//                    'view_template' == 'pages/articles' &&
-//                    array_key_exists('route_template', $def) == false &&
-//                    in_array('settings:demo_site_settings', $def['pods']);
-//           }))
-//           ->will($this->returnValue(array()));
-// 
-//     // don't inherit if route_template set to false
-//     $local_plumber::staticExpects($this->at(5))
-//           ->method('create_routes_with_factory')
-//           ->with($this->callback(function($def) {
-//                    return in_array(
-//                     'settings:demo_site_settings', 
-//                     $def['pods'] 
-//                    ) == false;
-//           }))
-//           ->will($this->returnValue(array()));
-// 
 //     // if specified route template doesn't exist, just remove the 
 //     // route_template attribute and return the rest of the definition
 //     // as is
@@ -487,6 +426,48 @@ class PlumberStaticTest extends PHPUnit_Framework_TestCase {
     PlumberStatic::create_routes($wp_router_stub);
     PlumberStatic::router_callback_post('multi-method');
   }
+
+
+  public function testMultiFunctionsAndFlexibleStringOrArrayInput() {
+    global $wp_router_stub;
+
+    $local_function_stubs = $this->get_user_function_stubs();
+    $local_function_stubs->expects($this->at(0))
+      ->method('singleton_pre_render')
+      ->with($this->anything())
+      ->will($this->returnValue(array('test')));
+
+    $local_function_stubs->expects($this->at(1))
+      ->method('singleton_another_render')
+      ->with($this->contains('test'))
+      ->will($this->returnValue(array('test_again')));
+
+    $local_function_stubs->expects($this->at(2))
+      ->method('singleton_final_render')
+      ->with($this->contains('test_again'))
+      ->will($this->returnValue(false));
+
+    $local_function_stubs->expects($this->at(3))
+      ->method('singleton_post_render')
+      ->with($this->contains('test_again'))
+      ->will($this->returnValue(false));
+
+    $local_function_stubs->expects($this->at(4))
+      ->method('singleton_another_render')
+      ->with($this->contains('test_again'))
+      ->will($this->returnValue(array('a thing to ignore')));
+
+    $local_function_stubs->expects($this->at(5))
+      ->method('singleton_final_render')
+      ->with($this->contains('test_again'))
+      ->will($this->returnValue(false));
+
+    UserFunctionStubs::set_active_instance($local_function_stubs);
+
+    PlumberStatic::create_routes($wp_router_stub);
+    PlumberStatic::router_callback_get('multiple-functions');
+  }
+
 }
 
 

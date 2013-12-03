@@ -68,6 +68,14 @@ $plumber->post(
     'pre_render' => 'UserFunctionStubs::pre_render'));
 
 $plumber->get(
+  'multiple-functions', array(
+    'pre_render' => array(
+      'UserFunctionStubs::pre_render', 
+      'UserFunctionStubs::another_render'),
+    'post_render' => 'UserFunctionStubs::post_render',
+    'route_template' => 'function-combos'));
+
+$plumber->get(
   'wrong-man', array(
     'pre_render' => 'notreal',
     'post_render' => 'notreal',
@@ -81,6 +89,11 @@ $plumber->get(
 
 // define route templates
 
+
+$plumber->route_template(
+  '_default', array(
+  'pods' => array('settings:demo_site_settings'),
+  'view_template' => 'pages/default'));
 
 $plumber->route_template(
   'list_page', array(
@@ -101,9 +114,12 @@ $plumber->route_template(
     'view_template' => 'pages/simple'));
 
 $plumber->route_template(
-  '_default', array(
-  'pods' => array('settings:demo_site_settings'),
-  'view_template' => 'pages/default'));
+  'function-combos', array(
+    'pre_render' => 'UserFunctionStubs::final_render',
+    'post_render' => array(
+      'UserFunctionStubs::another_render',
+      'UserFunctionStubs::final_render'),
+    'route_template' => false));
 
 
 ?>

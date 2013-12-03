@@ -152,16 +152,22 @@ class Plumber {
     );
     $pre_render_args['route_vars'] = $query_and_route_vars;
 
+    // call pre render function(s) if exists
     $pre_render = $route->get_pre_render();
-    $render_args = $this->user_callback($pre_render, $pre_render_args);
+    $render_args = $pre_render_args;
+    foreach($pre_render as $index => $function) {
+      $render_args = $this->user_callback($function, $render_args);
+    }
 
     // render view if view_template defined
     $template = $route->get_view_template();
     $this->render_view_template($template, $render_args);
 
-    // call post render function if it exists
+    // call post render function(s) if exists
     $post_render = $route->get_post_render();
-    $this->user_callback($post_render, $render_args);
+    foreach($post_render as $index => $function) {
+      $this->user_callback($function, $render_args);
+    }
 
     if($this->debug == true) {
       print '<hr /><h3>WP Plumber DEBUG</h3><hr />';
