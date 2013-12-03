@@ -3,10 +3,9 @@
 
 // create plumber
 
-// $p = new Plumber(array(
+// $plumber = new Plumber(array(
 //   'render' => 'UserFunctionStubs::view_render'));
 // 
-// var_dump($p);
 
 $plumber = $this->getMockBuilder('Plumber')
   ->setConstructorArgs(array(
