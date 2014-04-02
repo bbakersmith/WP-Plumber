@@ -56,7 +56,7 @@ WP Plumber's primary goal is to provide a concise interface for defining routes 
 A sequence diagram showing a visitor request to WP Plumber is shown below. All WP Plumber functionality is optional, as some routes may not require pods, many others will not define pre_render or post_render functions, and occasionally (as with redirects) a view may not be rendered at all. That said, the pre_render and post_render functions are dashed in the diagram to indicate that they are less likely to be called for the average request.
 
 
-![Plumber Sequence Diagram](http://bitsynthesis.com/wp-content/uploads/wp-plumber-sequence-diagram.png)
+![Plumber Sequence Diagram](http://bitsynthesis.com/assets/images/wp-plumber-sequence-diagram.png)
 
 
 Configuring WP Router can be as simple as defining some routes in functions.php and creating associated html/php templates in a "views" subdirectory of your theme.
